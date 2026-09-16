@@ -19,7 +19,7 @@ const MapDiscovery = dynamic(() => import('@/components/MapDiscovery'), {
         Initializing Tactical Vector Map...
       </div>
       <div className="font-mono text-xs text-slate-500 mt-1">
-        Locating Mumbai P2P Clusters
+        Locating Mumbai P2P Smart Parking Clusters
       </div>
     </div>
   ),
@@ -36,23 +36,22 @@ export default function DiscoveryPage() {
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-[#0a0e16]">
-      {/* 1. Full-Bleed Dark Tactical Map Layer */}
+      {/* 1. Full-Bleed Tactical Map Layer */}
       <MapDiscovery />
 
-      {/* 2. Live Turn-by-Turn GPS Navigation HUD or Default Search & Nav */}
-      {isNavigating ? (
-        <NavigationOverlay />
-      ) : (
-        <>
-          <Navbar />
-          <SearchCapsule />
-        </>
-      )}
+      {/* 2. Persistent Top Navigation Bar */}
+      <Navbar />
 
-      {/* 3. 2D Architectural CAD Parking Blueprint Drawer */}
+      {/* 3. Search Capsule (when not in full navigation mode) */}
+      {!isNavigating && <SearchCapsule />}
+
+      {/* 4. Live Turn-by-Turn Driving & Simulation HUD */}
+      {isNavigating && <NavigationOverlay />}
+
+      {/* 5. 2D Architectural CAD Parking Blueprint Drawer */}
       <PhysicalLayoutDrawer />
 
-      {/* 4. Active Digital Gate Pass Modal (Apple Wallet Style) */}
+      {/* 6. Active Digital Gate Pass Modal (Apple Wallet Style) */}
       <ActiveGatePassModal />
     </main>
   );

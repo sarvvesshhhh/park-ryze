@@ -9,6 +9,7 @@ export interface ParkingBay {
   status: BayStatus;
   vehicleSize: 'compact' | 'sedan' | 'suv' | 'two-wheeler';
   occupiedPlate?: string;
+  isRecommended?: boolean;
 }
 
 export interface ParkingLot {
@@ -32,6 +33,13 @@ export interface ParkingLot {
   levelName: string; // e.g. "Stilt Level 0"
   supportedVehicles: VehicleCategory[];
   bays: ParkingBay[];
+  
+  // Algorithmic Proximity & Recommendation Fields (computed dynamically)
+  distanceKm?: number;
+  driveTimeMins?: number;
+  walkTimeMins?: number;
+  recommendationScore?: number;
+  badge?: 'Best Match' | 'Closest Walk' | 'Best Value' | 'High Availability';
 }
 
 export interface ActivePass {
@@ -55,6 +63,8 @@ export interface ActivePass {
   hostName: string;
   hostPhone: string;
   status: 'active' | 'extended' | 'completed';
+  savings?: number;
+  discountPercent?: number;
 }
 
 export interface RouteStep {
@@ -90,4 +100,5 @@ export interface HostBookingRequest {
   payout: number;
   status: 'pending' | 'accepted' | 'declined';
   receivedAt: string;
+  lotId?: string;
 }

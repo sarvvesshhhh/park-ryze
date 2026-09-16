@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { ParkingLot, ActivePass, HostBookingRequest, VehicleCategory, NavigationRoute } from './types';
 import { INITIAL_PARKING_LOTS, INITIAL_HOST_REQUESTS } from './mockData';
 import { fetchTurnByTurnRoute } from './routing';
+import { rankParkingLots, calculateHaversineDistanceKm, RankedParkingLot } from './algorithms/proximity';
+import { calculateDynamicPrice, PricingBreakdown } from './algorithms/pricing';
+import { recommendOptimalBay, BayRecommendation } from './algorithms/allocation';
+import { SimulationState, createInitialSimulation, advanceSimulationStep } from './algorithms/simulation';
 
 interface ParkingStore {
   // Theme Mode (Stitch MCP spec: Dark / Light)
@@ -11,7 +15,7 @@ interface ParkingStore {
   // Navigation & Location
   userLocation: [number, number]; // [lat, lng] (Real GPS)
   startLocation: [number, number]; // [lat, lng] (Active Route Origin)
-  startLocationName: string; // e.g. "My GPS Location", "NMIMS Vile Parle", "Custom Start Pin"
+  startLocationName: string; // e.g. "My GPS Location", "NMIMS Vile Parle"
   isCustomStartPoint: boolean;
   
   // Destination / Park Location (Custom or Lot)
@@ -31,13 +35,15 @@ interface ParkingStore {
   toggleWatchGps: () => void;
   recalculateCurrentRoute: () => Promise<void>;
 
-  // Search & Filter
+  // Search & Filter with Algorithmic Radius
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   vehicleType: VehicleCategory;
   setVehicleType: (type: VehicleCategory) => void;
   radiusKm: number;
   setRadiusKm: (radius: number) => void;
+  sortBy: 'recommendation' | 'distance' | 'price' | 'availability';
+  setSortBy: (sort: 'recommendation' | 'distance' | 'price' | 'availability') => void;
 
   // Parking lots data
   parkingLots: ParkingLot[];
@@ -45,6 +51,11 @@ interface ParkingStore {
   selectedBayId: string | null;
   isDrawerOpen: boolean;
   
+  // Computed Algorithmic Selectors
+  getRankedLots: () => RankedParkingLot[];
+  getCurrentPricing: () => PricingBreakdown;
+  getOptimalBayRecommendation: () => BayRecommendation | null;
+
   // Selection & Booking controls
   selectedDurationHours: number;
   userVehiclePlate: string;
@@ -54,7 +65,7 @@ interface ParkingStore {
   closeDrawer: () => void;
   selectBay: (bayId: string) => void;
 
-  // Active Gate Pass
+  // Active Gate Pass & Lifecycle
   activePass: ActivePass | null;
   isPassModalOpen: boolean;
   openPassModal: () => void;
@@ -63,7 +74,7 @@ interface ParkingStore {
   extendActivePass: (additionalMinutes?: number) => void;
   completeActivePass: () => void;
 
-  // Real GPS Turn-by-Turn Navigation
+  // Turn-by-Turn GPS Navigation & Simulation
   mapboxToken: string;
   setMapboxToken: (token: string) => void;
   isNavigating: boolean;
@@ -74,6 +85,15 @@ interface ParkingStore {
   stopNavigation: () => void;
   nextStep: () => void;
   prevStep: () => void;
+
+  // Driving Simulation Engine
+  simulation: SimulationState | null;
+  startSimulation: () => void;
+  pauseSimulation: () => void;
+  resumeSimulation: () => void;
+  stopSimulation: () => void;
+  setSimulationSpeed: (speed: 1 | 2 | 5) => void;
+  stepSimulation: () => void;
 
   // Host Dashboard
   hostRequests: HostBookingRequest[];
@@ -91,7 +111,7 @@ interface ParkingStore {
 }
 
 export const useParkingStore = create<ParkingStore>((set, get) => ({
-  // Theme Mode: defaults to dark per Stitch spec, with localStorage persistence
+  // Theme Mode
   themeMode:
     typeof window !== 'undefined'
       ? (localStorage.getItem('park_ryze_theme') as 'dark' | 'light') || 'dark'
@@ -110,13 +130,12 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     set({ themeMode: nextTheme });
   },
 
-  // Default centered at Vile Parle West, Mumbai
+  // Locations (Default centered at Vile Parle West, Mumbai)
   userLocation: [19.1031, 72.8372],
   startLocation: [19.1031, 72.8372],
   startLocationName: 'My GPS Location',
   isCustomStartPoint: false,
 
-  // Destination / Park Location (Defaults to Gulmohar Heights CHS)
   destinationLocation: [19.1042, 72.8351],
   destinationName: 'Gulmohar Heights CHS',
   isCustomDestination: false,
@@ -137,7 +156,6 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
       startLocationName: name,
       isCustomStartPoint: true,
     });
-    // Dynamically recalculate route if destination is active
     const { destinationLocation, destinationName } = get();
     if (destinationLocation) {
       await get().startNavigationTo(destinationLocation, destinationName, 'Security Gate');
@@ -150,7 +168,6 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
       destinationName: name,
       isCustomDestination: true,
     });
-    // Immediately calculate turn-by-turn road route from startLocation to this destination
     await get().startNavigationTo(coords, name, gateName);
   },
 
@@ -241,6 +258,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
       set({
         activeRoute: updatedRoute,
         isCalculatingRoute: false,
+        simulation: updatedRoute ? createInitialSimulation(updatedRoute) : null,
       });
     } catch (err) {
       console.error('Recalculate route error:', err);
@@ -248,17 +266,70 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     }
   },
 
+  // Search & Algorithmic Filtering
   searchQuery: '',
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   vehicleType: 'car',
   setVehicleType: (vehicleType) => set({ vehicleType }),
-  radiusKm: 1.0,
+  radiusKm: 5.0, // Default 5 km search radius
   setRadiusKm: (radiusKm) => set({ radiusKm }),
+  sortBy: 'recommendation',
+  setSortBy: (sortBy) => set({ sortBy }),
 
   parkingLots: INITIAL_PARKING_LOTS,
   selectedLotId: null,
   selectedBayId: 'B-03',
   isDrawerOpen: false,
+
+  // Algorithmic Selectors
+  getRankedLots: () => {
+    const { parkingLots, startLocation, destinationLocation, isCustomDestination, radiusKm, vehicleType, sortBy, searchQuery } = get();
+    // Reference coords: if destination is set, find lots closest to destination; otherwise closest to start
+    const refCoords = isCustomDestination && destinationLocation ? destinationLocation : startLocation;
+    
+    let ranked = rankParkingLots(parkingLots, refCoords, radiusKm, vehicleType);
+
+    // If search query is provided, filter by name/locality/address
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      ranked = ranked.filter(
+        (l) =>
+          l.name.toLowerCase().includes(q) ||
+          l.locality.toLowerCase().includes(q) ||
+          l.address.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort accordingly
+    if (sortBy === 'distance') {
+      ranked.sort((a, b) => a.distanceKm - b.distanceKm);
+    } else if (sortBy === 'price') {
+      ranked.sort((a, b) => a.hourlyRate - b.hourlyRate);
+    } else if (sortBy === 'availability') {
+      ranked.sort((a, b) => b.availableBays - a.availableBays);
+    }
+
+    return ranked;
+  },
+
+  getCurrentPricing: () => {
+    const { selectedLotId, parkingLots, selectedDurationHours, vehicleType } = get();
+    const lot = parkingLots.find((l) => l.id === selectedLotId) || parkingLots[0];
+    return calculateDynamicPrice(
+      lot.hourlyRate,
+      selectedDurationHours,
+      vehicleType,
+      lot.totalBays,
+      lot.availableBays
+    );
+  },
+
+  getOptimalBayRecommendation: () => {
+    const { selectedLotId, parkingLots, vehicleType } = get();
+    const lot = parkingLots.find((l) => l.id === selectedLotId);
+    if (!lot) return null;
+    return recommendOptimalBay(lot, vehicleType);
+  },
 
   selectedDurationHours: 2,
   userVehiclePlate: 'MH 02 AB 4521',
@@ -267,11 +338,11 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
 
   selectLot: (lotId) => {
     const lot = get().parkingLots.find((l) => l.id === lotId);
-    let defaultBay = 'B-03';
     if (lot) {
-      const avail = lot.bays.find((b) => b.status === 'available');
-      if (avail) defaultBay = avail.id;
-      // Also update destinationLocation to this lot
+      // Find optimal bay recommendation for this lot
+      const rec = recommendOptimalBay(lot, get().vehicleType);
+      const defaultBay = rec ? rec.recommendedBay.id : (lot.bays.find((b) => b.status === 'available')?.id || 'B-03');
+
       set({
         selectedLotId: lotId,
         selectedBayId: defaultBay,
@@ -283,14 +354,12 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     } else {
       set({
         selectedLotId: lotId,
-        selectedBayId: defaultBay,
         isDrawerOpen: true,
       });
     }
   },
 
   closeDrawer: () => set({ isDrawerOpen: false }),
-
   selectBay: (selectedBayId) => set({ selectedBayId }),
 
   activePass: null,
@@ -298,16 +367,23 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
   openPassModal: () => set({ isPassModalOpen: true }),
   closePassModal: () => set({ isPassModalOpen: false }),
 
+  // End-to-End Booking with Dynamic Pricing and Host Synchronization
   bookCurrentSelection: () => {
-    const { selectedLotId, selectedBayId, parkingLots, selectedDurationHours, userVehiclePlate, vehicleType } = get();
+    const { selectedLotId, selectedBayId, parkingLots, selectedDurationHours, userVehiclePlate, vehicleType, autoCheckIn, hostRequests } = get();
     const lot = parkingLots.find((l) => l.id === selectedLotId) || parkingLots[0];
     const bayId = selectedBayId || 'B-03';
-    const hourlyRate = lot.hourlyRate;
-    const duration = selectedDurationHours;
-    const platformFee = 5;
-    const totalPaid = hourlyRate * duration + platformFee;
+    
+    // Algorithmic dynamic pricing
+    const pricing = calculateDynamicPrice(
+      lot.hourlyRate,
+      selectedDurationHours,
+      vehicleType,
+      lot.totalBays,
+      lot.availableBays
+    );
+
     const now = Date.now();
-    const endTime = now + duration * 60 * 60 * 1000;
+    const endTime = now + selectedDurationHours * 60 * 60 * 1000;
     const hash = `PR-${lot.id.substring(0, 3).toUpperCase()}-${bayId}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newPass: ActivePass = {
@@ -322,33 +398,53 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
       vehicleCategory: vehicleType,
       startTime: now,
       endTime: endTime,
-      durationHours: duration,
-      hourlyRate: hourlyRate,
-      platformFee: platformFee,
-      totalPaid: totalPaid,
+      durationHours: selectedDurationHours,
+      hourlyRate: pricing.effectiveHourlyRate,
+      platformFee: pricing.platformFee,
+      totalPaid: pricing.totalFare,
       entryGate: lot.entryGate,
       gateInstructions: lot.securityGateNotes,
       hostName: lot.hostName,
       hostPhone: lot.hostPhone,
       status: 'active',
+      savings: pricing.savingsVsStreetParking,
+      discountPercent: pricing.durationDiscountPercent,
     };
 
+    // Update parking lots (mark bay occupied)
     const updatedLots = parkingLots.map((l) => {
       if (l.id === lot.id) {
         return {
           ...l,
           availableBays: Math.max(0, l.availableBays - 1),
-          bays: l.bays.map((b) => (b.id === bayId ? { ...b, status: 'occupied' as const } : b)),
+          bays: l.bays.map((b) => (b.id === bayId ? { ...b, status: 'occupied' as const, occupiedPlate: userVehiclePlate } : b)),
         };
       }
       return l;
     });
+
+    // Synchronize to Host Dashboard: dispatch real request
+    const newHostRequest: HostBookingRequest = {
+      id: `req-${Date.now()}`,
+      driverName: 'Verified Driver',
+      bayId: bayId,
+      tower: lot.levelName,
+      vehiclePlate: userVehiclePlate || 'MH 02 AB 4521',
+      vehicleModel: vehicleType === 'two-wheeler' ? 'Ather 450X EV' : 'Honda City',
+      timeSlot: `Today, ${new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      duration: `${selectedDurationHours} Hours`,
+      payout: Math.round(pricing.totalFare * 0.85), // 85% host payout
+      status: autoCheckIn ? 'accepted' : 'pending',
+      receivedAt: 'Just now',
+      lotId: lot.id,
+    };
 
     set({
       activePass: newPass,
       isDrawerOpen: false,
       isPassModalOpen: true,
       parkingLots: updatedLots,
+      hostRequests: [newHostRequest, ...hostRequests],
     });
   },
 
@@ -379,7 +475,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
         return {
           ...l,
           availableBays: l.availableBays + 1,
-          bays: l.bays.map((b) => (b.id === activePass.bayId ? { ...b, status: 'available' as const } : b)),
+          bays: l.bays.map((b) => (b.id === activePass.bayId ? { ...b, status: 'available' as const, occupiedPlate: undefined } : b)),
         };
       }
       return l;
@@ -392,7 +488,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     });
   },
 
-  // Real Turn-by-Turn GPS Navigation State
+  // Real Turn-by-Turn GPS Navigation
   mapboxToken: typeof window !== 'undefined' ? localStorage.getItem('park_ryze_mapbox_token') || process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '' : '',
   setMapboxToken: (mapboxToken) => {
     if (typeof window !== 'undefined') {
@@ -433,6 +529,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
         activeRoute: route,
         currentStepIndex: 0,
         isCalculatingRoute: false,
+        simulation: route ? createInitialSimulation(route) : null,
       });
     } catch (err) {
       console.error('Failed to calculate route:', err);
@@ -441,7 +538,7 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
   },
 
   stopNavigation: () => {
-    set({ isNavigating: false, activeRoute: null, currentStepIndex: 0 });
+    set({ isNavigating: false, activeRoute: null, currentStepIndex: 0, simulation: null });
   },
 
   nextStep: () => {
@@ -459,6 +556,74 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     }
   },
 
+  // Driving Simulation Engine
+  simulation: null,
+
+  startSimulation: () => {
+    const { activeRoute, simulation } = get();
+    if (!activeRoute) return;
+    const sim = simulation || createInitialSimulation(activeRoute);
+    set({
+      simulation: {
+        ...sim,
+        isSimulating: true,
+        isPaused: false,
+      },
+    });
+  },
+
+  pauseSimulation: () => {
+    const { simulation } = get();
+    if (!simulation) return;
+    set({
+      simulation: {
+        ...simulation,
+        isPaused: true,
+        isSimulating: false,
+      },
+    });
+  },
+
+  resumeSimulation: () => {
+    const { simulation } = get();
+    if (!simulation) return;
+    set({
+      simulation: {
+        ...simulation,
+        isPaused: false,
+        isSimulating: true,
+      },
+    });
+  },
+
+  stopSimulation: () => {
+    const { activeRoute } = get();
+    if (!activeRoute) return;
+    set({ simulation: createInitialSimulation(activeRoute) });
+  },
+
+  setSimulationSpeed: (speed) => {
+    const { simulation } = get();
+    if (!simulation) return;
+    set({
+      simulation: {
+        ...simulation,
+        speedMultiplier: speed,
+      },
+    });
+  },
+
+  stepSimulation: () => {
+    const { simulation, activeRoute } = get();
+    if (!simulation || !activeRoute) return;
+    const nextSim = advanceSimulationStep(simulation, activeRoute);
+    set({
+      simulation: nextSim,
+      currentStepIndex: nextSim.currentStepIndex,
+    });
+  },
+
+  // Host Dashboard
   hostRequests: INITIAL_HOST_REQUESTS,
   autoCheckIn: true,
   acceptHostRequest: (id) => {
@@ -469,6 +634,22 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     }));
   },
   declineHostRequest: (id) => {
+    const req = get().hostRequests.find((r) => r.id === id);
+    // Free up bay if declined
+    if (req && req.lotId) {
+      set((state) => ({
+        parkingLots: state.parkingLots.map((l) => {
+          if (l.id === req.lotId) {
+            return {
+              ...l,
+              availableBays: l.availableBays + 1,
+              bays: l.bays.map((b) => (b.id === req.bayId ? { ...b, status: 'available' as const } : b)),
+            };
+          }
+          return l;
+        }),
+      }));
+    }
     set((state) => ({
       hostRequests: state.hostRequests.map((r) =>
         r.id === id ? { ...r, status: 'declined' as const } : r
@@ -476,33 +657,44 @@ export const useParkingStore = create<ParkingStore>((set, get) => ({
     }));
   },
   toggleAutoCheckIn: () => set((state) => ({ autoCheckIn: !state.autoCheckIn })),
+  
   addNewHostListing: (listing) => {
+    const newLotId = `host-lot-${Date.now()}`;
+    const baseCoords: [number, number] = [
+      19.1031 + (Math.random() - 0.5) * 0.02,
+      72.8372 + (Math.random() - 0.5) * 0.02,
+    ];
+
     const newLot: ParkingLot = {
-      id: `host-lot-${Date.now()}`,
+      id: newLotId,
       name: `${listing.societyName} — ${listing.tower}`,
-      subTitle: `Dedicated Bay ${listing.bayNumber}`,
+      subTitle: `Dedicated Host Bay ${listing.bayNumber}`,
       type: 'residential',
       address: `${listing.tower}, ${listing.societyName}, Mumbai`,
       locality: listing.societyName,
-      coordinates: [19.106 + (Math.random() - 0.5) * 0.02, 72.835 + (Math.random() - 0.5) * 0.02],
+      coordinates: baseCoords,
       hourlyRate: listing.hourlyRate,
-      totalBays: 1,
-      availableBays: 1,
-      clearance: '2.1m Clearance',
+      totalBays: 4,
+      availableBays: 3,
+      clearance: '2.4m Clearance',
       cctv: true,
       verifiedSociety: true,
-      securityGateNotes: 'Resident hosted bay. Inform security guard at main gate.',
-      entryGate: 'Gate 1',
-      hostName: 'Current User (Host)',
+      securityGateNotes: 'Resident hosted bay. Direct gate security to verify Park Ryze reservation QR pass.',
+      entryGate: 'Main Security Boom Barrier',
+      hostName: 'Verified Resident Host',
       hostPhone: '+91 98200 11223',
-      levelName: 'Ground Stilt',
+      levelName: 'Stilt Level 0',
       supportedVehicles: ['car', 'two-wheeler'],
       bays: [
-        { id: listing.bayNumber, row: 'A', number: 1, status: 'available', vehicleSize: 'sedan' }
-      ]
+        { id: listing.bayNumber, row: 'A', number: 1, status: 'available', vehicleSize: 'sedan' },
+        { id: 'A-02', row: 'A', number: 2, status: 'available', vehicleSize: 'suv' },
+        { id: 'B-01', row: 'B', number: 1, status: 'available', vehicleSize: 'compact' },
+        { id: 'B-02', row: 'B', number: 2, status: 'occupied', vehicleSize: 'sedan', occupiedPlate: 'MH 02 ER 9901' },
+      ],
     };
+
     set((state) => ({
-      parkingLots: [newLot, ...state.parkingLots]
+      parkingLots: [newLot, ...state.parkingLots],
     }));
-  }
+  },
 }));

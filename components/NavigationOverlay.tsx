@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParkingStore } from '@/lib/store';
 import {
   Navigation,
@@ -20,7 +20,11 @@ import {
   Ticket,
   ShieldCheck,
   RotateCw,
-  LocateFixed
+  LocateFixed,
+  Play,
+  Pause,
+  FastForward,
+  Car
 } from 'lucide-react';
 
 export default function NavigationOverlay() {
@@ -37,14 +41,34 @@ export default function NavigationOverlay() {
   const isCalculatingRoute = useParkingStore((s) => s.isCalculatingRoute);
   const recalculateCurrentRoute = useParkingStore((s) => s.recalculateCurrentRoute);
 
+  // Driving Simulation Engine
+  const simulation = useParkingStore((s) => s.simulation);
+  const startSimulation = useParkingStore((s) => s.startSimulation);
+  const pauseSimulation = useParkingStore((s) => s.pauseSimulation);
+  const resumeSimulation = useParkingStore((s) => s.resumeSimulation);
+  const stopSimulation = useParkingStore((s) => s.stopSimulation);
+  const setSimulationSpeed = useParkingStore((s) => s.setSimulationSpeed);
+  const stepSimulation = useParkingStore((s) => s.stepSimulation);
+
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Simulation timer loop
+  useEffect(() => {
+    if (!simulation || !simulation.isSimulating || simulation.isPaused) return;
+
+    const intervalMs = Math.max(150, Math.floor(700 / simulation.speedMultiplier));
+    const timer = setInterval(() => {
+      stepSimulation();
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [simulation?.isSimulating, simulation?.isPaused, simulation?.speedMultiplier, stepSimulation]);
 
   if (!isNavigating || !activeRoute) return null;
 
   const currentStep = activeRoute.steps[currentStepIndex] || activeRoute.steps[0];
   const nextStepItem = activeRoute.steps[currentStepIndex + 1];
 
-  // Helper for direction icons
   const renderManeuverIcon = (type: string, modifier?: string) => {
     const mod = modifier?.toLowerCase() || '';
     if (mod.includes('left')) return <CornerUpLeft className="w-6 h-6 text-emerald-400" />;
@@ -53,8 +77,14 @@ export default function NavigationOverlay() {
     return <ArrowUp className="w-6 h-6 text-emerald-400" />;
   };
 
+  const isSimActive = simulation && simulation.isSimulating;
+  const isSimPaused = simulation && simulation.isPaused;
+  const simProgress = simulation ? simulation.progressPercent : 0;
+  const displayDistance = simulation?.isSimulating ? simulation.remainingDistanceKm : activeRoute.distanceKm;
+  const displayDuration = simulation?.isSimulating ? simulation.remainingDurationMins : activeRoute.durationMins;
+
   return (
-    <div className="absolute inset-x-0 top-3 z-40 flex flex-col items-center pointer-events-none px-4">
+    <div className="absolute inset-x-0 top-16 md:top-20 z-40 flex flex-col items-center pointer-events-none px-4">
       {/* Primary Tactical Navigation Banner */}
       <div className="pointer-events-auto w-full max-w-xl bg-[#0d111a]/95 backdrop-blur-2xl border border-emerald-500/40 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300">
         
@@ -66,7 +96,7 @@ export default function NavigationOverlay() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
             </span>
             <span className="text-emerald-400 font-bold uppercase tracking-wider truncate">
-              {isCustomStartPoint ? 'CUSTOM ORIGIN ROUTE' : 'LIVE GPS GUIDANCE'}
+              {isSimActive ? '⚡ SIMULATING LIVE DRIVE' : isCustomStartPoint ? 'CUSTOM ORIGIN ROUTE' : 'LIVE GPS GUIDANCE'}
             </span>
             <span className="text-slate-500 hidden sm:inline">•</span>
             <span className="text-slate-300 truncate hidden sm:inline font-sans text-[11px]">
@@ -94,12 +124,85 @@ export default function NavigationOverlay() {
               type="button"
               onClick={stopNavigation}
               className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-              title="Cancel Navigation"
+              title="Close Navigation"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
+
+        {/* Driving Simulation Playback Bar */}
+        <div className="bg-[#101520] px-4 py-2 border-b border-white/5 flex items-center justify-between gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            {!isSimActive && !isSimPaused ? (
+              <button
+                type="button"
+                onClick={startSimulation}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+              >
+                <Play className="w-3 h-3 fill-current" />
+                <span>Simulate Drive</span>
+              </button>
+            ) : isSimPaused ? (
+              <button
+                type="button"
+                onClick={resumeSimulation}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-bold flex items-center gap-1.5 transition-all"
+              >
+                <Play className="w-3 h-3 fill-current" />
+                <span>Resume</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={pauseSimulation}
+                className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold flex items-center gap-1.5 transition-all"
+              >
+                <Pause className="w-3 h-3 fill-current" />
+                <span>Pause</span>
+              </button>
+            )}
+
+            {(isSimActive || isSimPaused) && (
+              <button
+                type="button"
+                onClick={stopSimulation}
+                className="px-2 py-1 rounded-lg bg-white/10 text-slate-300 hover:text-white text-[11px]"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
+          {/* Speed Multipliers & Progress */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 hidden sm:inline">Speed:</span>
+            {[1, 2, 5].map((speed) => (
+              <button
+                key={speed}
+                type="button"
+                onClick={() => setSimulationSpeed(speed as 1 | 2 | 5)}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                  simulation?.speedMultiplier === speed
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400'
+                    : 'bg-[#181f2c] text-slate-400 border-white/5 hover:text-white'
+                }`}
+              >
+                {speed}x
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Progress bar across polyline coordinates */}
+        {simulation && (
+          <div className="w-full bg-slate-800 h-1">
+            <div
+              className="bg-emerald-400 h-full transition-all duration-300 ease-out"
+              style={{ width: `${simProgress}%` }}
+            />
+          </div>
+        )}
 
         {/* Maneuver HUD Card */}
         <div className="p-4 md:p-5 flex items-center gap-4">
@@ -129,11 +232,11 @@ export default function NavigationOverlay() {
         <div className="grid grid-cols-3 bg-[#111622] px-4 py-2.5 border-t border-white/5 font-mono text-center divide-x divide-white/5">
           <div>
             <div className="text-[10px] text-slate-500 uppercase">Distance</div>
-            <div className="text-sm font-bold text-white">{activeRoute.distanceKm} km</div>
+            <div className="text-sm font-bold text-white">{displayDistance} km</div>
           </div>
           <div>
             <div className="text-[10px] text-slate-500 uppercase">Est. Arrival</div>
-            <div className="text-sm font-bold text-emerald-400">{activeRoute.durationMins} mins</div>
+            <div className="text-sm font-bold text-emerald-400">{displayDuration} mins</div>
           </div>
           <div>
             <div className="text-[10px] text-slate-500 uppercase">Target Gate</div>
@@ -189,7 +292,7 @@ export default function NavigationOverlay() {
 
         {/* Tactical Drag Hint */}
         <div className="bg-[#0c1017] px-4 py-1.5 border-t border-white/5 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-          <span>💡 Drag 🟢 Start or 🏁 Park pins on the map to recalculate route</span>
+          <span>💡 Drag 🟢 Start or 🏁 Park markers on map to recalculate route dynamically</span>
           {isCustomStartPoint && (
             <span className="text-amber-400 font-semibold">Custom Origin Active</span>
           )}

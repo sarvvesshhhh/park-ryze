@@ -82,6 +82,19 @@ export default function HostDashboardPage() {
     setTimeout(() => setScheduleSaved(false), 2500);
   };
 
+  const parkingLots = useParkingStore((s) => s.parkingLots);
+
+  // Compute live dynamic analytics
+  const acceptedPayoutTotal = hostRequests
+    .filter((r) => r.status === 'accepted')
+    .reduce((sum, r) => sum + r.payout, 0);
+  const totalWeeklyEarnings = 4250 + acceptedPayoutTotal;
+
+  const totalBays = parkingLots.reduce((sum, l) => sum + l.totalBays, 0);
+  const availableBays = parkingLots.reduce((sum, l) => sum + l.availableBays, 0);
+  const occupiedBays = Math.max(0, totalBays - availableBays);
+  const occupancyPercent = totalBays > 0 ? Math.round((occupiedBays / totalBays) * 100) : 75;
+
   return (
     <div className="min-h-screen bg-[#0b0f17] text-on-surface">
       <Navbar />
@@ -126,7 +139,7 @@ export default function HostDashboardPage() {
               </div>
             </div>
             <div className="my-3">
-              <div className="font-mono text-3xl font-black text-white">₹4,250</div>
+              <div className="font-mono text-3xl font-black text-white">₹{totalWeeklyEarnings.toLocaleString()}</div>
               <div className="flex items-center gap-1 text-emerald-400 text-xs font-mono mt-1">
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>+18.4% vs last week</span>
@@ -146,9 +159,9 @@ export default function HostDashboardPage() {
               </div>
             </div>
             <div className="my-3">
-              <div className="font-mono text-3xl font-black text-white">78%</div>
+              <div className="font-mono text-3xl font-black text-white">{occupancyPercent}%</div>
               <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                <div className="bg-sky-400 h-full rounded-full w-[78%]" />
+                <div className="bg-sky-400 h-full rounded-full" style={{ width: `${occupancyPercent}%` }} />
               </div>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">Peak hours: 10:00 - 19:00</div>
@@ -165,14 +178,16 @@ export default function HostDashboardPage() {
               </div>
             </div>
             <div className="my-3">
-              <div className="font-mono text-3xl font-black text-white">3 / 4</div>
+              <div className="font-mono text-3xl font-black text-white">
+                {occupiedBays} / {totalBays}
+              </div>
               <div className="text-xs text-on-surface-variant font-mono mt-1">
-                Bay B-42 in use • 1 arrival pending
+                {availableBays} bays available for booking
               </div>
             </div>
             <div className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-              All sensors online
+              All IoT sensors online
             </div>
           </div>
 
@@ -189,7 +204,7 @@ export default function HostDashboardPage() {
             <div className="my-3">
               <div className="font-mono text-3xl font-black text-white">142 hrs</div>
               <div className="text-xs text-on-surface-variant font-mono mt-1">
-                Across 2 registered residential spots
+                Across {parkingLots.length} registered society facilities
               </div>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">Lifetime total: 580 hrs</div>

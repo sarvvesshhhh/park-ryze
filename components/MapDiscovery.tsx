@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParkingStore } from '@/lib/store';
 import { ParkingLot } from '@/lib/types';
+import { calculateHaversineDistanceKm } from '@/lib/algorithms/proximity';
 import {
   Navigation,
   Plus,
@@ -16,7 +17,8 @@ import {
   LocateFixed,
   Crosshair,
   MapPin,
-  Flag
+  Flag,
+  Car
 } from 'lucide-react';
 import MapboxConfigModal from './MapboxConfigModal';
 import 'leaflet/dist/leaflet.css';
@@ -28,6 +30,8 @@ export default function MapDiscovery() {
   const markersLayerRef = useRef<any>(null); // LayerGroup for lot markers
   const startMarkerRef = useRef<any>(null); // Draggable Start Point / GPS Marker
   const destinationMarkerRef = useRef<any>(null); // Draggable Destination / Park Marker
+  const radiusCircleRef = useRef<any>(null); // Search Radius Radar Circle
+  const simulatedCarMarkerRef = useRef<any>(null); // Simulated driving vehicle marker
   const routeLayersRef = useRef<{ glow?: any; core?: any }>({});
 
   const [is3DMode, setIs3DMode] = useState(false);
@@ -39,6 +43,8 @@ export default function MapDiscovery() {
   const parkingLots = useParkingStore((s) => s.parkingLots);
   const selectedLotId = useParkingStore((s) => s.selectedLotId);
   const selectLot = useParkingStore((s) => s.selectLot);
+  const getRankedLots = useParkingStore((s) => s.getRankedLots);
+  const radiusKm = useParkingStore((s) => s.radiusKm);
   
   // Start origin
   const userLocation = useParkingStore((s) => s.userLocation);
@@ -61,6 +67,7 @@ export default function MapDiscovery() {
   const activeRoute = useParkingStore((s) => s.activeRoute);
   const isNavigating = useParkingStore((s) => s.isNavigating);
   const mapboxToken = useParkingStore((s) => s.mapboxToken);
+  const simulation = useParkingStore((s) => s.simulation);
 
   // Active Key: from store or .env.local fallback
   const activeKey =
@@ -95,19 +102,7 @@ export default function MapDiscovery() {
     return `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${activeKey}`;
   };
 
-  // Filter lots based on query and vehicle compatibility
-  const filteredLots = parkingLots.filter((lot) => {
-    const matchesVehicle = lot.supportedVehicles.includes(vehicleType);
-    if (!matchesVehicle) return false;
-
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      lot.name.toLowerCase().includes(q) ||
-      lot.locality.toLowerCase().includes(q) ||
-      lot.address.toLowerCase().includes(q)
-    );
-  });
+  const rankedLots = getRankedLots();
 
   useEffect(() => {
     setIsMounted(true);
@@ -122,7 +117,6 @@ export default function MapDiscovery() {
     const initMap = async () => {
       const L = (await import('leaflet')).default || (await import('leaflet'));
 
-      // If map exists already, clean it up
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -147,7 +141,7 @@ export default function MapDiscovery() {
       const markersLayer = L.layerGroup().addTo(map);
       markersLayerRef.current = markersLayer;
 
-      // Draggable Start Point / GPS Location Marker
+      // Draggable Start Point Marker
       const startMarkerHtml = isCustomStartPoint
         ? `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
@@ -232,16 +226,19 @@ export default function MapDiscovery() {
         destinationMarkerRef.current = destMarker;
       }
 
-      // Click anywhere on the map to show tactical action popup
+      // Click anywhere on the map to show contextual action popup
       map.on('click', (e: any) => {
         const { lat, lng } = e.latlng;
+        const distFromStart = calculateHaversineDistanceKm(startLocation, [lat, lng]);
+
         const popupContent = document.createElement('div');
-        popupContent.className = 'p-2 space-y-2 font-sans text-xs min-w-[210px]';
+        popupContent.className = 'p-2 space-y-2 font-sans text-xs min-w-[220px]';
         popupContent.innerHTML = `
-          <div class="font-mono text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-            TACTICAL MAP COORDINATE
+          <div class="font-mono text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex justify-between">
+            <span>TACTICAL MAP POINT</span>
+            <span class="text-slate-400">${distFromStart} km away</span>
           </div>
-          <div class="text-[11px] text-slate-400 font-mono">
+          <div class="text-[11px] text-slate-300 font-mono">
             ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E
           </div>
           <div class="flex flex-col gap-1.5 pt-1">
@@ -255,7 +252,7 @@ export default function MapDiscovery() {
             </button>
             <button id="search-nearby-btn" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-mono transition-colors flex items-center gap-1.5">
               <span>🅿️</span>
-              <span>Explore Parking Bays Here</span>
+              <span>Filter Parking Within Radius</span>
             </button>
           </div>
         `;
@@ -360,7 +357,7 @@ export default function MapDiscovery() {
     updateMarker();
   }, [startLocation, isCustomStartPoint]);
 
-  // 4. Update Destination / Park Marker
+  // 4. Update Destination Marker
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -421,7 +418,38 @@ export default function MapDiscovery() {
     updateDestMarker();
   }, [destinationLocation, setDestinationPoint]);
 
-  // 5. Render Parking Lot Tactical Pins
+  // 5. Draw / Update Radar Proximity Radius Circle
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    const drawRadius = async () => {
+      const L = (await import('leaflet')).default || (await import('leaflet'));
+      const map = mapInstanceRef.current;
+
+      const centerCoord = isCustomDestination && destinationLocation ? destinationLocation : startLocation;
+
+      if (radiusCircleRef.current) {
+        map.removeLayer(radiusCircleRef.current);
+        radiusCircleRef.current = null;
+      }
+
+      const circle = L.circle(centerCoord, {
+        radius: radiusKm * 1000,
+        color: '#10b981',
+        weight: 1.5,
+        opacity: 0.7,
+        dashArray: '4, 8',
+        fillColor: '#10b981',
+        fillOpacity: 0.04,
+      }).addTo(map);
+
+      radiusCircleRef.current = circle;
+    };
+
+    drawRadius();
+  }, [startLocation, destinationLocation, isCustomDestination, radiusKm]);
+
+  // 6. Render Parking Lot Tactical Pins with Proximity Metrics & Dynamic Pricing
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
@@ -430,47 +458,58 @@ export default function MapDiscovery() {
       const markersLayer = markersLayerRef.current;
       markersLayer.clearLayers();
 
-      filteredLots.forEach((lot) => {
+      rankedLots.forEach((lot) => {
         const isSelected = selectedLotId === lot.id;
         const isResidential = lot.type === 'residential';
+        const dynamicRate = vehicleType === 'two-wheeler' ? Math.round(lot.hourlyRate * 0.4) : lot.hourlyRate;
+
+        const badgeHtml = lot.badge
+          ? `<span class="px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 text-[9px] font-black uppercase tracking-tight shadow-sm">${lot.badge}</span>`
+          : '';
 
         const markerHtml = isResidential
           ? `
             <div class="cursor-pointer select-none transition-transform hover:scale-105 group">
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                isSelected
-                  ? 'bg-emerald-400 text-slate-950 font-black shadow-[0_0_20px_rgba(16,185,129,0.95)] ring-2 ring-white scale-110'
-                  : 'bg-[#10b981] text-[#003824] shadow-[0_4px_16px_rgba(16,185,129,0.45)] border border-emerald-300/40'
-              } font-mono font-bold text-xs">
-                <span class="text-sm">🏠</span>
-                <span class="tracking-tight">₹${lot.hourlyRate}/hr</span>
-                <span class="opacity-40">•</span>
-                <span class="text-[11px] font-sans font-semibold">${lot.availableBays} Left</span>
+              <div class="flex flex-col items-center">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                  isSelected
+                    ? 'bg-emerald-400 text-slate-950 font-black shadow-[0_0_20px_rgba(16,185,129,0.95)] ring-2 ring-white scale-110'
+                    : 'bg-[#10b981] text-[#003824] shadow-[0_4px_16px_rgba(16,185,129,0.45)] border border-emerald-300/40'
+                } font-mono font-bold text-xs">
+                  <span class="text-sm">🏠</span>
+                  <span class="tracking-tight">₹${dynamicRate}/hr</span>
+                  <span class="opacity-40">•</span>
+                  <span class="text-[11px] font-sans font-semibold">${lot.distanceKm}km</span>
+                  ${badgeHtml}
+                </div>
+                <div class="w-2.5 h-2.5 bg-[#10b981] rotate-45 mx-auto -mt-1 shadow-sm"></div>
               </div>
-              <div class="w-2.5 h-2.5 bg-[#10b981] rotate-45 mx-auto -mt-1 shadow-sm"></div>
             </div>
           `
           : `
             <div class="cursor-pointer select-none transition-transform hover:scale-105 group">
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                isSelected
-                  ? 'bg-sky-400 text-slate-950 font-black shadow-[0_0_20px_rgba(56,189,248,0.95)] ring-2 ring-white scale-110'
-                  : 'bg-[#161c28] text-[#e2e8f0] shadow-[0_4px_16px_rgba(0,0,0,0.8)] border border-emerald-400/50'
-              } font-mono font-bold text-xs">
-                <span class="text-sm">🏢</span>
-                <span class="tracking-tight">₹${lot.hourlyRate}/hr</span>
-                <span class="opacity-40">•</span>
-                <span class="text-[11px] font-sans font-semibold text-emerald-400">${lot.availableBays} Left</span>
+              <div class="flex flex-col items-center">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                  isSelected
+                    ? 'bg-sky-400 text-slate-950 font-black shadow-[0_0_20px_rgba(56,189,248,0.95)] ring-2 ring-white scale-110'
+                    : 'bg-[#161c28] text-[#e2e8f0] shadow-[0_4px_16px_rgba(0,0,0,0.8)] border border-emerald-400/50'
+                } font-mono font-bold text-xs">
+                  <span class="text-sm">🏢</span>
+                  <span class="tracking-tight">₹${dynamicRate}/hr</span>
+                  <span class="opacity-40">•</span>
+                  <span class="text-[11px] font-sans font-semibold text-emerald-400">${lot.distanceKm}km</span>
+                  ${badgeHtml}
+                </div>
+                <div class="w-2.5 h-2.5 bg-[#161c28] rotate-45 mx-auto -mt-1 border-r border-b border-emerald-400/50 shadow-sm"></div>
               </div>
-              <div class="w-2.5 h-2.5 bg-[#161c28] rotate-45 mx-auto -mt-1 border-r border-b border-emerald-400/50 shadow-sm"></div>
             </div>
           `;
 
         const customIcon = L.divIcon({
           className: 'custom-lot-pin',
           html: markerHtml,
-          iconSize: [120, 36],
-          iconAnchor: [60, 36],
+          iconSize: [140, 42],
+          iconAnchor: [70, 36],
         });
 
         const [lat, lng] = lot.coordinates;
@@ -488,9 +527,9 @@ export default function MapDiscovery() {
     };
 
     renderPins();
-  }, [filteredLots, selectedLotId, selectLot]);
+  }, [rankedLots, selectedLotId, selectLot, vehicleType]);
 
-  // 6. Pan & Zoom to selected lot
+  // 7. Pan & Zoom to selected lot
   useEffect(() => {
     if (!selectedLotId || !mapInstanceRef.current || isNavigating) return;
     const lot = parkingLots.find((l) => l.id === selectedLotId);
@@ -500,7 +539,7 @@ export default function MapDiscovery() {
     }
   }, [selectedLotId, parkingLots, isNavigating]);
 
-  // 7. Draw Turn-by-Turn GPS Navigation Route Polyline
+  // 8. Draw Turn-by-Turn GPS Navigation Route Polyline
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -508,7 +547,6 @@ export default function MapDiscovery() {
       const L = (await import('leaflet')).default || (await import('leaflet'));
       const map = mapInstanceRef.current;
 
-      // Clean up previous route layers
       if (routeLayersRef.current.glow) {
         map.removeLayer(routeLayersRef.current.glow);
       }
@@ -520,7 +558,6 @@ export default function MapDiscovery() {
       if (activeRoute && activeRoute.coordinates.length > 0) {
         const latLngs: [number, number][] = activeRoute.coordinates.map(([lng, lat]) => [lat, lng]);
 
-        // Glowing Halo Layer
         const glow = L.polyline(latLngs, {
           color: '#10b981',
           weight: 10,
@@ -529,7 +566,6 @@ export default function MapDiscovery() {
           lineJoin: 'round',
         }).addTo(map);
 
-        // Crisp Core Tactical Line
         const core = L.polyline(latLngs, {
           color: '#4edea3',
           weight: 4.5,
@@ -547,7 +583,60 @@ export default function MapDiscovery() {
     renderRoute();
   }, [activeRoute]);
 
-  // Recenter to active start location
+  // 9. Simulated Driving Car Marker
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    const updateSimulatedVehicle = async () => {
+      const L = (await import('leaflet')).default || (await import('leaflet'));
+      const map = mapInstanceRef.current;
+
+      if (!simulation || (!simulation.isSimulating && simulation.progressPercent === 0)) {
+        if (simulatedCarMarkerRef.current) {
+          map.removeLayer(simulatedCarMarkerRef.current);
+          simulatedCarMarkerRef.current = null;
+        }
+        return;
+      }
+
+      const [simLat, simLng] = simulation.currentCoord;
+
+      const simMarkerHtml = `
+        <div class="relative flex flex-col items-center">
+          <div class="px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 font-mono text-[9px] font-black shadow-[0_0_15px_rgba(16,185,129,0.9)] whitespace-nowrap mb-1">
+            🚘 SIMULATED DRIVER (${simulation.progressPercent}%)
+          </div>
+          <div class="relative flex items-center justify-center">
+            <div class="w-8 h-8 rounded-full bg-emerald-500/40 animate-ping absolute"></div>
+            <div class="w-6 h-6 rounded-full bg-emerald-400 border-2 border-white shadow-lg flex items-center justify-center text-slate-950 font-bold text-xs">
+              ⚡
+            </div>
+          </div>
+        </div>
+      `;
+
+      const simIcon = L.divIcon({
+        className: 'sim-vehicle-pin',
+        html: simMarkerHtml,
+        iconSize: [140, 40],
+        iconAnchor: [70, 32],
+      });
+
+      if (simulatedCarMarkerRef.current) {
+        simulatedCarMarkerRef.current.setIcon(simIcon);
+        simulatedCarMarkerRef.current.setLatLng([simLat, simLng]);
+      } else {
+        const marker = L.marker([simLat, simLng], {
+          icon: simIcon,
+          zIndexOffset: 1200,
+        }).addTo(map);
+        simulatedCarMarkerRef.current = marker;
+      }
+    };
+
+    updateSimulatedVehicle();
+  }, [simulation]);
+
   const handleRecenter = () => {
     if (mapInstanceRef.current) {
       const [lat, lng] = startLocation;
@@ -569,7 +658,7 @@ export default function MapDiscovery() {
 
   return (
     <div className="relative w-full h-full min-h-screen overflow-hidden bg-[#0a0e16]">
-      {/* 2D / 3D Perspective Container */}
+      {/* Map Container */}
       <div
         className="w-full h-full min-h-screen transition-transform duration-700 ease-out origin-bottom"
         style={{
@@ -581,7 +670,7 @@ export default function MapDiscovery() {
 
       {/* Floating Tactical Map Controls (Bottom-Right) */}
       <div className="absolute bottom-6 right-6 flex flex-col gap-2.5 z-30 pointer-events-auto">
-        {/* Reset to GPS Location (shows when custom start point is set) */}
+        {/* Reset to GPS Location */}
         {isCustomStartPoint && (
           <button
             type="button"
@@ -599,107 +688,63 @@ export default function MapDiscovery() {
           onClick={toggleLayer}
           className={`glass-panel w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
             layerType === 'satellite'
-              ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400'
-              : 'text-on-surface hover:text-emerald-400 hover:border-emerald-500/40 border border-white/10'
+              ? 'text-sky-400 border-sky-400/50 bg-sky-500/20'
+              : 'text-on-surface-variant hover:text-white'
           }`}
-          title={`Switch Map Layer (Current: ${layerType === 'streets' ? 'Streets' : 'Satellite'})`}
+          title="Toggle Satellite Imagery"
         >
           <Layers className="w-4 h-4" />
         </button>
 
-        {/* 2D / 3D Perspective Tilt Mode Toggle */}
+        {/* 3D Perspective Tilt Toggle */}
         <button
           type="button"
           onClick={() => setIs3DMode(!is3DMode)}
           className={`glass-panel w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
             is3DMode
-              ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400'
-              : 'text-on-surface hover:text-white border border-white/10'
+              ? 'text-emerald-400 border-emerald-400/50 bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+              : 'text-on-surface-variant hover:text-white'
           }`}
-          title="Toggle 2D / 3D Perspective"
+          title="Toggle 3D Angle"
         >
-          <Eye className="w-4 h-4" />
+          <Compass className="w-4 h-4" />
         </button>
 
-        {/* Settings / API Key Modal Button */}
+        {/* Zoom In */}
         <button
           type="button"
-          onClick={() => setIsSettingsOpen(true)}
-          className="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/20 transition-all shadow-lg active:scale-95"
-          title="Map API Credentials & Settings"
+          onClick={handleZoomIn}
+          className="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-white transition-all shadow-lg active:scale-95"
+          title="Zoom In"
         >
-          <Settings2 className="w-4 h-4" />
+          <Plus className="w-4 h-4" />
         </button>
 
-        {/* Recenter Button */}
+        {/* Zoom Out */}
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          className="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-white transition-all shadow-lg active:scale-95"
+          title="Zoom Out"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+
+        {/* Recenter */}
         <button
           type="button"
           onClick={handleRecenter}
-          className="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-on-surface hover:text-emerald-400 hover:border-emerald-500/40 border border-white/10 transition-all shadow-lg active:scale-95"
-          title="Recenter Map to Active Origin Coordinates"
+          className="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-emerald-400 hover:text-emerald-300 transition-all shadow-lg active:scale-95"
+          title="Center on Origin Point"
         >
-          <Navigation className="w-4 h-4 text-emerald-400" />
+          <Navigation className="w-4 h-4" />
         </button>
-
-        {/* Zoom In/Out Controls */}
-        <div className="flex flex-col glass-panel rounded-xl overflow-hidden shadow-lg border border-white/10">
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-white hover:bg-white/10 transition-colors border-b border-white/10 active:scale-95"
-            title="Zoom In"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            className="w-10 h-10 flex items-center justify-center text-on-surface hover:text-white hover:bg-white/10 transition-colors active:scale-95"
-            title="Zoom Out"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-        </div>
       </div>
 
-      {/* Subtle Legend & Origin Bar on bottom left */}
-      <div className="hidden sm:flex absolute bottom-6 left-6 items-center gap-3 px-3.5 py-2 rounded-xl glass-panel text-[11px] font-mono text-on-surface-variant z-30 border border-white/10 shadow-lg pointer-events-auto">
-        <div className="flex items-center gap-1.5">
-          <span className={`w-2.5 h-2.5 rounded-full ${isCustomStartPoint ? 'bg-amber-400' : 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]'}`}></span>
-          <span className="text-white font-semibold">{isCustomStartPoint ? 'Custom Start' : 'Live GPS'}</span>
-        </div>
-        <span className="opacity-30">•</span>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-          <span className="text-white font-semibold">{destinationName ? 'Park Set' : 'Select Bay'}</span>
-        </div>
-        <span className="opacity-30">•</span>
-        <div className="flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-emerald-300 font-semibold">
-            {layerType === 'satellite'
-              ? 'Satellite Hybrid'
-              : themeMode === 'light'
-              ? 'Streets Light'
-              : 'Streets Dark'}
-          </span>
-        </div>
-        {activeRoute && (
-          <>
-            <span className="opacity-30">•</span>
-            <div className="flex items-center gap-1.5 text-emerald-300 font-semibold">
-              <Route className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>Route: {activeRoute.distanceKm}km</span>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Mapbox / MapTiler Configuration Modal */}
-      <MapboxConfigModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+      {/* Mapbox Token Config Modal */}
+      {isSettingsOpen && (
+        <MapboxConfigModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      )}
     </div>
   );
 }
