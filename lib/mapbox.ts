@@ -277,6 +277,71 @@ export const MUMBAI_CURATED_LANDMARKS: Array<{
     coords: [72.8333, 18.9217],
     category: 'commercial',
   },
+
+  // Residential Cooperative Housing Societies (Vile Parle West / JVPD Scheme Cluster)
+  {
+    name: 'Gulmohar Heights CHS',
+    aliases: ['gulmohar heights', 'gulmohar heights chs', 'gulmohar cross road 9', 'gulmohar 9'],
+    subtitle: 'Gulmohar Cross Road 9, Near NMIMS, Vile Parle West, Mumbai',
+    coords: [72.8372, 19.1031],
+    category: 'landmark',
+  },
+  {
+    name: 'Silver Oak CHS',
+    aliases: ['silver oak', 'silver oak chs', 'silver oak vile parle', 'gulmohar 7'],
+    subtitle: 'Gulmohar Cross Road 7, JVPD Scheme, Vile Parle West, Mumbai',
+    coords: [72.8358, 19.1046],
+    category: 'landmark',
+  },
+  {
+    name: 'Ashoka Enclave CHS',
+    aliases: ['ashoka enclave', 'ashoka enclave chs', 'ashoka nmims'],
+    subtitle: 'V. L. Mehta Road, Opp NMIMS New Campus, Vile Parle West, Mumbai',
+    coords: [72.8351, 19.1039],
+    category: 'landmark',
+  },
+  {
+    name: 'Vasant Vihar CHS',
+    aliases: ['vasant vihar', 'vasant vihar chs', 'vasant vihar mithibai'],
+    subtitle: '10th Road, JVPD Scheme, Near Mithibai College, Vile Parle West, Mumbai',
+    coords: [72.8394, 19.1022],
+    category: 'landmark',
+  },
+  {
+    name: 'Sagar Villa CHS',
+    aliases: ['sagar villa', 'sagar villa chs', 'gulmohar 10'],
+    subtitle: 'Gulmohar Cross Road 10, JVPD Scheme, Vile Parle West, Mumbai',
+    coords: [72.8392, 19.1051],
+    category: 'landmark',
+  },
+  {
+    name: 'Prarthana Heights CHS',
+    aliases: ['prarthana heights', 'prarthana heights chs', 'prarthana juhu'],
+    subtitle: 'Gulmohar Cross Road 5, Near Juhu Circle, Vile Parle West, Mumbai',
+    coords: [72.8348, 19.1015],
+    category: 'landmark',
+  },
+  {
+    name: 'Madhukunj CHS',
+    aliases: ['madhukunj', 'madhukunj chs', 'kaifi azmi parking', 'gulmohar 4'],
+    subtitle: 'Gulmohar Cross Road 4, Near Kaifi Azmi Park, JVPD Scheme, Mumbai',
+    coords: [72.8341, 19.1054],
+    category: 'landmark',
+  },
+  {
+    name: 'Palm Springs CHS',
+    aliases: ['palm springs', 'palm springs chs', 'gulmohar 12'],
+    subtitle: 'Gulmohar Cross Road 12, JVPD Scheme, Vile Parle West, Mumbai',
+    coords: [72.8383, 19.1068],
+    category: 'landmark',
+  },
+  {
+    name: 'Shanti Kunj CHS',
+    aliases: ['shanti kunj', 'shanti kunj chs', 'shanti kunj cooper'],
+    subtitle: 'N.S. Road No. 3, Near Cooper Hospital, JVPD Scheme, Mumbai',
+    coords: [72.8345, 19.1062],
+    category: 'landmark',
+  },
 ];
 
 /**
