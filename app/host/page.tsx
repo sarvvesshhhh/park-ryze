@@ -184,58 +184,43 @@ export default function HostDashboardPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#0b0f17] flex flex-col items-center justify-center px-4">
-        {/* Background grid decoration */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
-          backgroundImage: 'linear-gradient(rgba(16,185,129,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.4) 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }} />
-
-        {/* Glow orb */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
-
-        {/* Lock Card */}
-        <div className="relative w-full max-w-md">
+        {/* Bespoke Admin Sign-In Card */}
+        <div className="w-full max-w-sm">
           {/* Header brand */}
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.5)]">
-                <div className="w-5 h-5 rounded-md border-2 border-slate-950 flex items-center justify-center font-mono text-xs font-black text-slate-950">P</div>
-              </div>
-              <div>
-                <div className="font-heading text-xl font-bold text-white tracking-tight">Park Ryze</div>
-                <div className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest">Internal Admin Panel</div>
-              </div>
+          <div className="flex items-center justify-center gap-2.5 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+              <span className="font-mono text-xs font-black text-slate-950">P</span>
             </div>
+            <div className="font-heading text-lg font-bold text-white tracking-tight">Park Ryze</div>
           </div>
 
-          {/* Barrier card */}
-          <div className="glass-panel rounded-3xl p-8 shadow-[0_24px_80px_rgba(0,0,0,0.6)] border border-white/10">
-            {/* Lock icon */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                <Lock className="w-7 h-7 text-amber-400" />
+          <div className="bg-[#111824] rounded-2xl p-6 sm:p-7 border border-slate-800 shadow-xl">
+            <div className="mb-6">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-emerald-400 mb-1">
+                <Lock className="w-3.5 h-3.5" />
+                <span>Host Portal</span>
               </div>
-              <h1 className="font-heading text-2xl font-black text-white tracking-tight">Restricted Access</h1>
-              <p className="text-sm text-on-surface-variant font-sans mt-1.5 text-center">
-                Host Command Center is restricted to internal Park Ryze admins only.
+              <h1 className="text-xl font-bold text-white tracking-tight">Admin Sign In</h1>
+              <p className="text-xs text-slate-400 mt-1">
+                Enter your admin passcode to access bay monetization and listing controls.
               </p>
             </div>
 
             {/* Passcode form */}
             <form onSubmit={handleUnlock} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">
-                  Admin Passcode
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Passcode
                 </label>
                 <div className="relative">
-                  <KeyRound className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <KeyRound className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
                   <input
                     id="admin-passcode-input"
                     type={showPass ? 'text' : 'password'}
                     value={passInput}
                     onChange={(e) => { setPassInput(e.target.value); setPassError(''); }}
-                    placeholder="Enter admin passcode…"
-                    className="w-full bg-[#111824] border border-[#2B313E] rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder:text-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none transition-all font-mono"
+                    placeholder="Admin passcode…"
+                    className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none transition-colors font-mono"
                     autoFocus
                   />
                   <button
@@ -247,9 +232,9 @@ export default function HostDashboardPage() {
                   </button>
                 </div>
                 {passError && (
-                  <p className="text-xs text-red-400 font-mono mt-1.5 flex items-center gap-1">
-                    <X className="w-3 h-3" />
-                    {passError}
+                  <p className="text-xs text-rose-400 mt-1.5 flex items-center gap-1">
+                    <X className="w-3 h-3 shrink-0" />
+                    <span>{passError}</span>
                   </p>
                 )}
               </div>
@@ -258,17 +243,17 @@ export default function HostDashboardPage() {
                 id="unlock-host-btn"
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 font-heading font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.35)] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed"
+                className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed shadow-sm"
               >
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
-                    <span>Verifying Credentials…</span>
+                    <span>Verifying…</span>
                   </>
                 ) : (
                   <>
                     <Unlock className="w-4 h-4" />
-                    <span>Unlock Host Panel</span>
+                    <span>Sign In</span>
                   </>
                 )}
               </button>
@@ -555,7 +540,7 @@ export default function HostDashboardPage() {
                         onClick={() => toggleDay(day)}
                         className={`py-2 rounded-xl text-xs font-mono font-bold transition-all ${
                           isSelected
-                            ? 'bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                            ? 'bg-emerald-500 text-slate-950 shadow-xs'
                             : 'bg-[#11141d] border border-[#2B313E] text-slate-400 hover:text-white hover:border-slate-500'
                         }`}
                       >
@@ -743,7 +728,7 @@ export default function HostDashboardPage() {
                 {/* Submit Action */}
                 <button
                   type="submit"
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-sm py-3 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.35)] flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-sm py-3 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Publish Bay to Marketplace</span>

@@ -87,7 +87,7 @@ export default function ActiveGatePassModal() {
 
       {/* Apple Wallet / Boarding Pass Ticket Container */}
       <div className="relative w-full max-w-[440px] my-auto max-h-[94vh] flex flex-col z-10 animate-in zoom-in-95 duration-200">
-        <div className="anti-fraud-border bg-[#121620]/95 backdrop-blur-2xl rounded-2xl flex flex-col max-h-[94vh] shadow-[0_0_50px_rgba(16,185,129,0.2)] border border-white/10 text-on-surface overflow-hidden">
+        <div className="anti-fraud-border bg-[#121620]/95 backdrop-blur-2xl rounded-2xl flex flex-col max-h-[94vh] shadow-2xl border border-white/10 text-on-surface overflow-hidden">
           
           {/* Header - Fixed at Top with Instant Close Button */}
           <div className="p-4 md:p-5 bg-[#161a25] border-b border-white/10 shrink-0 flex items-start justify-between gap-3">
@@ -245,7 +245,7 @@ export default function ActiveGatePassModal() {
                   closePassModal();
                   startNavigationTo(lot.coordinates, activePass.lotName, activePass.entryGate);
                 }}
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-xs md:text-sm py-3 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-xs md:text-sm py-3 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
               >
                 <Navigation className="w-4 h-4" />
                 <span>Navigate to Gate</span>

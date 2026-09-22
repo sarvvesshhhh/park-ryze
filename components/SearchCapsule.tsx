@@ -351,51 +351,51 @@ export default function SearchCapsule() {
 
             {/* Multi-Factor Sort By Buttons */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-white/5">
-              <span className="font-mono text-[11px] text-slate-400 uppercase">Sort Algorithm:</span>
+              <span className="font-mono text-[11px] text-slate-400 uppercase">Sort By:</span>
               <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
                 <button
                   type="button"
                   onClick={() => setSortBy('recommendation')}
                   className={`px-2.5 py-1 rounded-lg border transition-all ${
                     sortBy === 'recommendation'
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-bold'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-medium'
                       : 'bg-[#141a24] text-slate-400 border-white/5 hover:text-white'
                   }`}
                 >
-                  ⭐ AI Best Match
+                  Recommended
                 </button>
                 <button
                   type="button"
                   onClick={() => setSortBy('distance')}
                   className={`px-2.5 py-1 rounded-lg border transition-all ${
                     sortBy === 'distance'
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-bold'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-medium'
                       : 'bg-[#141a24] text-slate-400 border-white/5 hover:text-white'
                   }`}
                 >
-                  📍 Nearest First
+                  Nearest
                 </button>
                 <button
                   type="button"
                   onClick={() => setSortBy('price')}
                   className={`px-2.5 py-1 rounded-lg border transition-all ${
                     sortBy === 'price'
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-bold'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-medium'
                       : 'bg-[#141a24] text-slate-400 border-white/5 hover:text-white'
                   }`}
                 >
-                  💰 Lowest Fare
+                  Lowest Fare
                 </button>
                 <button
                   type="button"
                   onClick={() => setSortBy('availability')}
                   className={`px-2.5 py-1 rounded-lg border transition-all ${
                     sortBy === 'availability'
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-bold'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-medium'
                       : 'bg-[#141a24] text-slate-400 border-white/5 hover:text-white'
                   }`}
                 >
-                  🟢 Most Open Bays
+                  Most Available
                 </button>
               </div>
             </div>
@@ -405,8 +405,8 @@ export default function SearchCapsule() {
         {/* Quick Mumbai Destination Chips */}
         {!searchQuery && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs font-mono">
-            <span className="text-[11px] text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-400" /> Hotspots:
+            <span className="text-[11px] text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-slate-400" /> Quick access:
             </span>
             {QUICK_LANDMARKS.map((item) => (
               <button

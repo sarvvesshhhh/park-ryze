@@ -199,7 +199,7 @@ export default function PhysicalLayoutDrawer() {
                       onClick={() => selectBay(bay.id)}
                       className={`relative h-28 rounded-md flex flex-col items-center justify-between p-2 font-mono text-xs transition-all ${
                         isSelected
-                          ? 'bg-emerald-500 text-slate-950 font-bold ring-2 ring-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] scale-[1.03] z-10'
+                          ? 'bg-emerald-500 text-slate-950 font-bold ring-2 ring-emerald-300 shadow-md scale-[1.02] z-10'
                           : isAvail
                           ? isAiRecommended
                             ? 'bg-[#18232c] border-2 border-emerald-400 text-emerald-300 hover:bg-[#1f2d3a] cursor-pointer'
@@ -212,7 +212,7 @@ export default function PhysicalLayoutDrawer() {
                           {bay.vehicleSize.slice(0, 3)}
                         </span>
                         {isAiRecommended && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" title="AI Optimal Bay" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="AI Optimal Bay" />
                         )}
                       </div>
 
@@ -224,7 +224,7 @@ export default function PhysicalLayoutDrawer() {
                           <span className="text-[8px] text-slate-400 font-mono mt-0.5">OCCUPIED</span>
                         </div>
                       ) : (
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse my-auto" />
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 my-auto" />
                       )}
 
                       <span className="font-bold tracking-tight text-[11px]">
@@ -282,7 +282,7 @@ export default function PhysicalLayoutDrawer() {
                       onClick={() => selectBay(bay.id)}
                       className={`relative h-28 rounded-md flex flex-col items-center justify-between p-2 font-mono text-xs transition-all ${
                         isSelected
-                          ? 'bg-emerald-500 text-slate-950 font-bold ring-2 ring-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.7)] scale-[1.03] z-10'
+                          ? 'bg-emerald-500 text-slate-950 font-bold ring-2 ring-emerald-300 shadow-md scale-[1.02] z-10'
                           : isAvail
                           ? isAiRecommended
                             ? 'bg-[#18232c] border-2 border-emerald-400 text-emerald-300 hover:bg-[#1f2d3a] cursor-pointer'
@@ -295,7 +295,7 @@ export default function PhysicalLayoutDrawer() {
                           {bay.vehicleSize.slice(0, 3)}
                         </span>
                         {isAiRecommended && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" title="AI Optimal Bay" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Recommended Bay" />
                         )}
                       </div>
 
@@ -307,7 +307,7 @@ export default function PhysicalLayoutDrawer() {
                           <span className="text-[8px] text-slate-400 font-mono mt-0.5">OCCUPIED</span>
                         </div>
                       ) : (
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse my-auto" />
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 my-auto" />
                       )}
 
                       <span className="font-bold tracking-tight text-[11px]">
@@ -435,7 +435,7 @@ export default function PhysicalLayoutDrawer() {
             <button
               type="button"
               onClick={bookCurrentSelection}
-              className="sm:col-span-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-xs md:text-sm py-3.5 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+              className="sm:col-span-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-xs md:text-sm py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
             >
               <span>Confirm Bay {selectedBay.id} for ₹{pricing.totalFare}</span>
               <ChevronRight className="w-4 h-4" />

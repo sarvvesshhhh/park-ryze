@@ -206,7 +206,7 @@ export default function NavigationOverlay() {
 
         {/* Maneuver HUD Card */}
         <div className="p-4 md:p-5 flex items-center gap-4">
-          <div className="w-13 h-13 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+          <div className="w-13 h-13 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center shrink-0 shadow-sm">
             {renderManeuverIcon(currentStep.maneuverType, currentStep.modifier)}
           </div>
 
@@ -283,7 +283,7 @@ export default function NavigationOverlay() {
               stopNavigation();
               if (activePass) openPassModal();
             }}
-            className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading text-xs font-bold transition-all shadow-[0_0_10px_rgba(16,185,129,0.4)] flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
           >
             <Ticket className="w-3.5 h-3.5" />
             <span>Arrived at Gate</span>

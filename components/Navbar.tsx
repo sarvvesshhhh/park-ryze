@@ -18,7 +18,7 @@ export default function Navbar() {
     <header className="fixed top-3 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-full bg-[#0f131c]/80 backdrop-blur-xl border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.6)] flex justify-between items-center px-4 md:px-7 py-2.5 z-40">
       {/* Brand & Minimal Geometric Badge */}
       <Link href="/" className="flex items-center gap-2.5 group">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)] group-hover:scale-105 transition-transform">
+        <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs">
           <div className="w-4 h-4 rounded-sm border-2 border-slate-950 flex items-center justify-center font-mono text-[10px] font-black text-slate-950">
             P
           </div>
@@ -66,7 +66,7 @@ export default function Navbar() {
         {activePass && (
           <button
             onClick={openPassModal}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 transition-all text-xs font-mono font-medium animate-pulse"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25 transition-all text-xs font-mono font-medium shadow-xs"
             title="View Active Gate Pass"
           >
             <Ticket className="w-3.5 h-3.5" />
@@ -78,7 +78,7 @@ export default function Navbar() {
         {/* Switch Mode Button */}
         <Link
           href={isHostPage ? '/customer' : '/host'}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-[0_0_12px_rgba(16,185,129,0.35)] active:scale-95"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-sm active:scale-95"
         >
           <ArrowRightLeft className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">

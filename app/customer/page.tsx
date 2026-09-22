@@ -13,13 +13,10 @@ import { useParkingStore } from '@/lib/store';
 const MapDiscovery = dynamic(() => import('@/components/MapDiscovery'), {
   ssr: false,
   loading: () => (
-    <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#0a0e16] text-on-surface">
-      <div className="relative w-12 h-12 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin" />
-      <div className="font-heading text-sm font-semibold tracking-wider text-emerald-400 mt-4 uppercase">
-        Initializing Tactical Vector Map...
-      </div>
-      <div className="font-mono text-xs text-slate-500 mt-1">
-        Locating Mumbai P2P Smart Parking Clusters
+    <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#0a0e16] text-slate-300">
+      <div className="w-8 h-8 rounded-full border-2 border-slate-700 border-t-emerald-400 animate-spin" />
+      <div className="text-xs font-medium text-slate-400 mt-3 tracking-wide">
+        Loading map…
       </div>
     </div>
   ),
