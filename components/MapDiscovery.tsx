@@ -102,7 +102,11 @@ export default function MapDiscovery() {
     return `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${activeKey}`;
   };
 
+  const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'available_only'>('all');
+
   const rankedLots = getRankedLots();
+  const availableCount = rankedLots.filter((l) => l.availableBays > 0).length;
+  const fullCount = rankedLots.filter((l) => l.availableBays === 0).length;
 
   useEffect(() => {
     setIsMounted(true);
@@ -458,64 +462,81 @@ export default function MapDiscovery() {
       const markersLayer = markersLayerRef.current;
       markersLayer.clearLayers();
 
-      rankedLots.forEach((lot) => {
+      const displayedLots = availabilityFilter === 'available_only'
+        ? rankedLots.filter((lot) => lot.availableBays > 0)
+        : rankedLots;
+
+      displayedLots.forEach((lot) => {
         const isSelected = selectedLotId === lot.id;
         const isResidential = lot.type === 'residential';
         const dynamicRate = vehicleType === 'two-wheeler' ? Math.round(lot.hourlyRate * 0.4) : lot.hourlyRate;
+        const isAvailable = lot.availableBays > 0;
 
         const badgeHtml = lot.badge
           ? `<span class="px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 text-[9px] font-black uppercase tracking-tight shadow-sm">${lot.badge}</span>`
           : '';
 
-        const markerHtml = isResidential
-          ? `
-            <div class="cursor-pointer select-none transition-transform hover:scale-105 group">
+        let markerHtml = '';
+
+        if (isAvailable) {
+          // ── Radiant Available Marker (Green glowing pin with spots badge & pulse) ──
+          const typeIcon = isResidential ? '🏠' : '🏢';
+          markerHtml = `
+            <div class="cursor-pointer select-none transition-all duration-300 hover:scale-110 group">
               <div class="flex flex-col items-center">
                 <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
                   isSelected
-                    ? 'bg-emerald-400 text-slate-950 font-black shadow-[0_0_20px_rgba(16,185,129,0.95)] ring-2 ring-white scale-110'
-                    : 'bg-[#10b981] text-[#003824] shadow-[0_4px_16px_rgba(16,185,129,0.45)] border border-emerald-300/40'
+                    ? 'bg-emerald-400 text-slate-950 font-black shadow-[0_0_24px_rgba(16,185,129,1)] ring-2 ring-white scale-110'
+                    : 'bg-[#0e291f] text-emerald-300 shadow-[0_4px_18px_rgba(16,185,129,0.5)] border-2 border-emerald-400/80 hover:border-emerald-300'
                 } font-mono font-bold text-xs">
-                  <span class="text-sm">🏠</span>
-                  <span class="tracking-tight">₹${dynamicRate}/hr</span>
-                  <span class="opacity-40">•</span>
-                  <span class="text-[11px] font-sans font-semibold">${lot.distanceKm}km</span>
+                  <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  </span>
+                  <span class="text-sm">${typeIcon}</span>
+                  <span class="tracking-tight text-white font-black">₹${dynamicRate}/hr</span>
+                  <span class="px-1.5 py-0.2 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-[10px] text-emerald-300 font-extrabold tracking-tight">
+                    ${lot.availableBays} SPOTS
+                  </span>
                   ${badgeHtml}
                 </div>
-                <div class="w-2.5 h-2.5 bg-[#10b981] rotate-45 mx-auto -mt-1 shadow-sm"></div>
-              </div>
-            </div>
-          `
-          : `
-            <div class="cursor-pointer select-none transition-transform hover:scale-105 group">
-              <div class="flex flex-col items-center">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
-                  isSelected
-                    ? 'bg-sky-400 text-slate-950 font-black shadow-[0_0_20px_rgba(56,189,248,0.95)] ring-2 ring-white scale-110'
-                    : 'bg-[#161c28] text-[#e2e8f0] shadow-[0_4px_16px_rgba(0,0,0,0.8)] border border-emerald-400/50'
-                } font-mono font-bold text-xs">
-                  <span class="text-sm">🏢</span>
-                  <span class="tracking-tight">₹${dynamicRate}/hr</span>
-                  <span class="opacity-40">•</span>
-                  <span class="text-[11px] font-sans font-semibold text-emerald-400">${lot.distanceKm}km</span>
-                  ${badgeHtml}
-                </div>
-                <div class="w-2.5 h-2.5 bg-[#161c28] rotate-45 mx-auto -mt-1 border-r border-b border-emerald-400/50 shadow-sm"></div>
+                <div class="w-2.5 h-2.5 bg-[#0e291f] rotate-45 mx-auto -mt-1 border-r-2 border-b-2 border-emerald-400/80 shadow-md"></div>
               </div>
             </div>
           `;
+        } else {
+          // ── Unavailable / Full Marker (Muted Charcoal with ruby-red accent & lock) ──
+          markerHtml = `
+            <div class="cursor-pointer select-none transition-all duration-300 hover:scale-105 opacity-80 hover:opacity-100 group">
+              <div class="flex flex-col items-center">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full ${
+                  isSelected
+                    ? 'bg-rose-500 text-white font-black shadow-[0_0_20px_rgba(244,63,94,0.9)] ring-2 ring-white scale-105'
+                    : 'bg-[#181316] text-rose-300 shadow-[0_4px_14px_rgba(0,0,0,0.8)] border border-rose-500/40'
+                } font-mono font-bold text-xs">
+                  <span class="text-[11px]">🔒</span>
+                  <span class="line-through text-slate-500 text-[11px]">₹${dynamicRate}/hr</span>
+                  <span class="px-1.5 py-0.2 rounded-full bg-rose-500/20 border border-rose-500/40 text-[9px] text-rose-300 font-extrabold uppercase tracking-wider">
+                    FULL
+                  </span>
+                </div>
+                <div class="w-2.5 h-2.5 bg-[#181316] rotate-45 mx-auto -mt-1 border-r border-b border-rose-500/40 shadow-sm"></div>
+              </div>
+            </div>
+          `;
+        }
 
         const customIcon = L.divIcon({
           className: 'custom-lot-pin',
           html: markerHtml,
-          iconSize: [140, 42],
-          iconAnchor: [70, 36],
+          iconSize: [160, 44],
+          iconAnchor: [80, 38],
         });
 
         const [lat, lng] = lot.coordinates;
         const marker = L.marker([lat, lng], {
           icon: customIcon,
-          zIndexOffset: isSelected ? 500 : 100,
+          zIndexOffset: isSelected ? 500 : isAvailable ? 150 : 80,
         });
 
         marker.on('click', () => {
@@ -527,7 +548,7 @@ export default function MapDiscovery() {
     };
 
     renderPins();
-  }, [rankedLots, selectedLotId, selectLot, vehicleType]);
+  }, [rankedLots, selectedLotId, selectLot, vehicleType, availabilityFilter]);
 
   // 7. Pan & Zoom to selected lot
   useEffect(() => {
@@ -666,6 +687,50 @@ export default function MapDiscovery() {
         }}
       >
         <div ref={mapContainerRef} className="w-full h-full min-h-screen z-0" />
+      </div>
+
+      {/* Floating Availability Legend & Filter (Bottom-Left) */}
+      <div className="absolute bottom-6 left-6 z-30 pointer-events-auto hidden sm:flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#0f131c]/90 backdrop-blur-xl border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.6)] font-mono text-xs">
+        <button
+          type="button"
+          onClick={() => setAvailabilityFilter('all')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all font-heading font-medium text-xs ${
+            availabilityFilter === 'all'
+              ? 'bg-white/15 text-white border border-white/20 shadow-sm'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span>All Spaces</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/10 text-slate-300">
+            {rankedLots.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setAvailabilityFilter('available_only')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all font-heading font-medium text-xs ${
+            availabilityFilter === 'available_only'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+              : 'text-emerald-400/80 hover:text-emerald-300'
+          }`}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+          </span>
+          <span>Available Now</span>
+          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/25 text-emerald-300 font-bold">
+            {availableCount}
+          </span>
+        </button>
+
+        {fullCount > 0 && (
+          <div className="flex items-center gap-1 px-2.5 py-1 text-slate-500 text-[11px] font-mono border-l border-white/10">
+            <span>🔒</span>
+            <span>{fullCount} Full</span>
+          </div>
+        )}
       </div>
 
       {/* Floating Tactical Map Controls (Bottom-Right) */}

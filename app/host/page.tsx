@@ -28,49 +28,76 @@ import {
   KeyRound
 } from 'lucide-react';
 
-const ADMIN_PASSCODE = 'admin123';
-const SESSION_KEY = 'park_ryze_host_session';
-
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function HostDashboardPage() {
-  // ─── Admin Access Barrier ─────────────────────────────────────────────────
+  // ─── Secure Server-Side Admin Access Barrier ──────────────────────────────
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passInput, setPassInput] = useState('');
   const [passError, setPassError] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Restore session from localStorage
-    try {
-      const stored = localStorage.getItem(SESSION_KEY);
-      if (stored === 'authenticated') setIsAuthenticated(true);
-    } catch { /* localStorage unavailable */ }
-    setIsCheckingSession(false);
+    // Check server session cookie
+    const verifySession = async () => {
+      try {
+        const res = await fetch('/api/host/auth', { method: 'GET' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+          }
+        }
+      } catch {
+        // Network error / fallback to locked
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    verifySession();
   }, []);
 
-  const handleUnlock = (e: React.FormEvent) => {
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passInput === ADMIN_PASSCODE) {
-      setIsAuthenticated(true);
-      setPassError('');
-      try { localStorage.setItem(SESSION_KEY, 'authenticated'); } catch { /* ignore */ }
-    } else {
-      setPassError('Incorrect passcode. Try: admin123');
-      setPassInput('');
+    if (!passInput.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setPassError('');
+
+    try {
+      const res = await fetch('/api/host/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: passInput.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+        setPassInput('');
+        setPassError('');
+      } else {
+        setPassError(data.error || 'Access denied. Incorrect admin passcode.');
+      }
+    } catch {
+      setPassError('Authentication service unreachable. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDemoUnlock = () => {
-    setIsAuthenticated(true);
-    try { localStorage.setItem(SESSION_KEY, 'authenticated'); } catch { /* ignore */ }
-  };
-
-  const handleLock = () => {
+  const handleLock = async () => {
+    try {
+      await fetch('/api/host/auth', { method: 'DELETE' });
+    } catch {
+      /* ignore */
+    }
     setIsAuthenticated(false);
     setPassInput('');
-    try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
   };
 
   // ─── All Existing Host Logic (unchanged) ──────────────────────────────────
@@ -230,34 +257,27 @@ export default function HostDashboardPage() {
               <button
                 id="unlock-host-btn"
                 type="submit"
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.35)] active:scale-[0.99]"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 font-heading font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.35)] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed"
               >
-                <Unlock className="w-4 h-4" />
-                Unlock Host Panel
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                    <span>Verifying Credentials…</span>
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="w-4 h-4" />
+                    <span>Unlock Host Panel</span>
+                  </>
+                )}
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-white/8" />
-              <span className="text-[11px] text-slate-500 font-mono uppercase tracking-wider">or</span>
-              <div className="flex-1 h-px bg-white/8" />
+            <div className="mt-6 pt-5 border-t border-white/8 flex items-center justify-center gap-2 text-slate-500 text-[11px] font-mono">
+              <Shield className="w-3.5 h-3.5 text-emerald-500/60" />
+              <span>Encrypted Server-Side Session Auth</span>
             </div>
-
-            {/* Demo Quick Unlock */}
-            <button
-              id="demo-unlock-btn"
-              type="button"
-              onClick={handleDemoUnlock}
-              className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-heading text-sm flex items-center justify-center gap-2 transition-all"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Quick Demo Unlock (Reviewer Access)
-            </button>
-
-            <p className="text-center text-[11px] text-slate-500 font-mono mt-5">
-              Default passcode: <span className="text-emerald-400 font-bold">admin123</span>
-            </p>
           </div>
 
           {/* Back to customer link */}

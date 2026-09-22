@@ -417,6 +417,13 @@ export const MUMBAI_CURATED_LANDMARKS: Array<{
     category: 'station',
   },
   {
+    name: 'Jogeshwari Railway Station',
+    aliases: ['jogeshwari', 'jogeshwari station', 'jogeshwari west station', 'jogeshwari railway'],
+    subtitle: 'S.V. Road, Jogeshwari West, Mumbai',
+    coords: [72.8488, 19.1365],
+    category: 'station',
+  },
+  {
     name: 'Goregaon Railway Station',
     aliases: ['goregaon', 'goregaon station', 'goregaon west station'],
     subtitle: 'S.V. Road, Goregaon West, Mumbai',
@@ -442,6 +449,27 @@ export const MUMBAI_CURATED_LANDMARKS: Array<{
     aliases: ['borivali', 'borivali station', 'borivali west station', 'borivali east station'],
     subtitle: 'Borivali, Mumbai',
     coords: [72.8547, 19.2285],
+    category: 'station',
+  },
+  {
+    name: 'Dahisar Railway Station',
+    aliases: ['dahisar', 'dahisar station', 'dahisar west station', 'dahisar railway'],
+    subtitle: 'S.N. Dubey Road, Dahisar West, Mumbai',
+    coords: [72.8580, 19.2545],
+    category: 'station',
+  },
+  {
+    name: 'Mira Road Railway Station',
+    aliases: ['mira road', 'mira road station', 'mira station', 'mira road railway'],
+    subtitle: 'Station Road, Shanti Nagar, Mira Road, Mumbai MMR',
+    coords: [72.8560, 19.2815],
+    category: 'station',
+  },
+  {
+    name: 'Bhayander Railway Station',
+    aliases: ['bhayander', 'bhayander station', 'bhayander west station', 'bhayander railway'],
+    subtitle: 'Station Road, Bhayander West, Mumbai MMR',
+    coords: [72.8515, 19.3092],
     category: 'station',
   },
   {
@@ -584,6 +612,61 @@ export const MUMBAI_CURATED_LANDMARKS: Array<{
     subtitle: 'GK Marg, Lower Parel, Mumbai',
     coords: [72.8283, 19.0025],
     category: 'commercial',
+  },
+
+  // ── Mumbai Metro Line 2A (Yellow: Dahisar East–D.N. Nagar / Andheri West) ─
+  {
+    name: 'Lower Oshiwara Metro Station (Line 2A – Yellow)',
+    aliases: ['lower oshiwara metro', 'oshiwara metro', 'line 2a oshiwara', 'yellow line oshiwara'],
+    subtitle: 'Link Road, Oshiwara, Andheri West, Mumbai',
+    coords: [72.8315, 19.1450],
+    category: 'station',
+  },
+  {
+    name: 'Borivali West Metro Station (Line 2A – Yellow)',
+    aliases: ['borivali west metro', 'don bosco metro', 'line 2a borivali', 'yellow line borivali'],
+    subtitle: 'Link Road, Shimpoli, Borivali West, Mumbai',
+    coords: [72.8430, 19.2320],
+    category: 'station',
+  },
+  {
+    name: 'Kandarpada Metro Station (Line 2A – Yellow)',
+    aliases: ['kandarpada metro', 'dahisar west metro', 'line 2a dahisar', 'yellow line dahisar'],
+    subtitle: 'Link Road, Kandarpada, Dahisar West, Mumbai',
+    coords: [72.8520, 19.2550],
+    category: 'station',
+  },
+
+  // ── Mumbai Metro Line 9 (Red Extension: Dahisar–Mira Bhayander) ───────────
+  {
+    name: 'Golden Nest Metro Station (Line 9 – Red Extension)',
+    aliases: ['golden nest metro', 'mira road metro', 'line 9 golden nest', 'red line mira bhayander'],
+    subtitle: 'Mira Bhayander Road, Golden Nest Circle, Mira Bhayander, Mumbai MMR',
+    coords: [72.8570, 19.2950],
+    category: 'station',
+  },
+  {
+    name: 'MBMC Subhash Chandra Bose Metro (Line 9)',
+    aliases: ['mbmc metro', 'bhayander metro', 'line 9 bhayander', 'subhash chandra bose metro'],
+    subtitle: 'Bhayander West, Mira Bhayander, Mumbai MMR',
+    coords: [72.8520, 19.3080],
+    category: 'station',
+  },
+
+  // ── Vile Parle West Healthcare & College Hubs ─────────────────────────────
+  {
+    name: 'Cooper Hospital & Medical Campus Plaza',
+    aliases: ['cooper hospital', 'cooper medical', 'cooper hospital parking', 'jvpg club parking'],
+    subtitle: 'U15 Road, Near JVPG Club, Vile Parle West, Mumbai',
+    coords: [72.8360, 19.1065],
+    category: 'hospital',
+  },
+  {
+    name: 'Mithibai & UPG College Commerce Plaza',
+    aliases: ['mithibai', 'mithibai college', 'upg college', 'mithibai parking', 'vl mehta commerce'],
+    subtitle: 'V.L. Mehta Road, JVPD Scheme, Vile Parle West, Mumbai',
+    coords: [72.8365, 19.1030],
+    category: 'university',
   },
 ];
 

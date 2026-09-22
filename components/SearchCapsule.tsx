@@ -27,11 +27,12 @@ import {
 import { searchHybridPlaces, GeocodingResult, LandmarkCategory } from '@/lib/mapbox';
 
 const QUICK_LANDMARKS = [
-  { name: 'NMIMS (Vile Parle)', coords: [19.1034, 72.8365] as [number, number], category: 'university' },
+  { name: 'NMIMS / MPSTME (Vile Parle)', coords: [19.1082, 72.8370] as [number, number], category: 'university' },
+  { name: 'Andheri Station (Line 1)', coords: [19.1197, 72.8466] as [number, number], category: 'station' },
+  { name: 'Goregaon Aarey (Line 7)', coords: [19.1595, 72.8670] as [number, number], category: 'station' },
+  { name: 'Borivali Station (West)', coords: [19.2290, 72.8535] as [number, number], category: 'station' },
+  { name: 'Mira Road Station', coords: [19.2815, 72.8560] as [number, number], category: 'station' },
   { name: 'BKC (Jio World)', coords: [19.0645, 72.8681] as [number, number], category: 'commercial' },
-  { name: 'Lilavati Hospital', coords: [19.0514, 72.8297] as [number, number], category: 'hospital' },
-  { name: 'Phoenix Palladium', coords: [18.9958, 72.8242] as [number, number], category: 'mall' },
-  { name: 'Nariman Point', coords: [18.9281, 72.8242] as [number, number], category: 'locality' },
 ];
 
 export default function SearchCapsule() {
