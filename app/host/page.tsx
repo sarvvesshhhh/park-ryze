@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useParkingStore } from '@/lib/store';
@@ -18,12 +18,62 @@ import {
   Shield,
   Layers,
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  LogOut,
+  KeyRound
 } from 'lucide-react';
+
+const ADMIN_PASSCODE = 'admin123';
+const SESSION_KEY = 'park_ryze_host_session';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function HostDashboardPage() {
+  // ─── Admin Access Barrier ─────────────────────────────────────────────────
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passInput, setPassInput] = useState('');
+  const [passError, setPassError] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    // Restore session from localStorage
+    try {
+      const stored = localStorage.getItem(SESSION_KEY);
+      if (stored === 'authenticated') setIsAuthenticated(true);
+    } catch { /* localStorage unavailable */ }
+    setIsCheckingSession(false);
+  }, []);
+
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passInput === ADMIN_PASSCODE) {
+      setIsAuthenticated(true);
+      setPassError('');
+      try { localStorage.setItem(SESSION_KEY, 'authenticated'); } catch { /* ignore */ }
+    } else {
+      setPassError('Incorrect passcode. Try: admin123');
+      setPassInput('');
+    }
+  };
+
+  const handleDemoUnlock = () => {
+    setIsAuthenticated(true);
+    try { localStorage.setItem(SESSION_KEY, 'authenticated'); } catch { /* ignore */ }
+  };
+
+  const handleLock = () => {
+    setIsAuthenticated(false);
+    setPassInput('');
+    try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+  };
+
+  // ─── All Existing Host Logic (unchanged) ──────────────────────────────────
   const hostRequests = useParkingStore((s) => s.hostRequests);
   const acceptHostRequest = useParkingStore((s) => s.acceptHostRequest);
   const declineHostRequest = useParkingStore((s) => s.declineHostRequest);
@@ -95,6 +145,133 @@ export default function HostDashboardPage() {
   const occupiedBays = Math.max(0, totalBays - availableBays);
   const occupancyPercent = totalBays > 0 ? Math.round((occupiedBays / totalBays) * 100) : 75;
 
+  // ─── Admin Access Barrier Screen ─────────────────────────────────────────
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-[#0b0f17] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#0b0f17] flex flex-col items-center justify-center px-4">
+        {/* Background grid decoration */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
+          backgroundImage: 'linear-gradient(rgba(16,185,129,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.4) 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
+
+        {/* Glow orb */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+
+        {/* Lock Card */}
+        <div className="relative w-full max-w-md">
+          {/* Header brand */}
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.5)]">
+                <div className="w-5 h-5 rounded-md border-2 border-slate-950 flex items-center justify-center font-mono text-xs font-black text-slate-950">P</div>
+              </div>
+              <div>
+                <div className="font-heading text-xl font-bold text-white tracking-tight">Park Ryze</div>
+                <div className="text-[10px] font-mono text-emerald-400 uppercase tracking-widest">Internal Admin Panel</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Barrier card */}
+          <div className="glass-panel rounded-3xl p-8 shadow-[0_24px_80px_rgba(0,0,0,0.6)] border border-white/10">
+            {/* Lock icon */}
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                <Lock className="w-7 h-7 text-amber-400" />
+              </div>
+              <h1 className="font-heading text-2xl font-black text-white tracking-tight">Restricted Access</h1>
+              <p className="text-sm text-on-surface-variant font-sans mt-1.5 text-center">
+                Host Command Center is restricted to internal Park Ryze admins only.
+              </p>
+            </div>
+
+            {/* Passcode form */}
+            <form onSubmit={handleUnlock} className="space-y-4">
+              <div>
+                <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">
+                  Admin Passcode
+                </label>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <input
+                    id="admin-passcode-input"
+                    type={showPass ? 'text' : 'password'}
+                    value={passInput}
+                    onChange={(e) => { setPassInput(e.target.value); setPassError(''); }}
+                    placeholder="Enter admin passcode…"
+                    className="w-full bg-[#111824] border border-[#2B313E] rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder:text-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none transition-all font-mono"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {passError && (
+                  <p className="text-xs text-red-400 font-mono mt-1.5 flex items-center gap-1">
+                    <X className="w-3 h-3" />
+                    {passError}
+                  </p>
+                )}
+              </div>
+
+              <button
+                id="unlock-host-btn"
+                type="submit"
+                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.35)] active:scale-[0.99]"
+              >
+                <Unlock className="w-4 h-4" />
+                Unlock Host Panel
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-white/8" />
+              <span className="text-[11px] text-slate-500 font-mono uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-white/8" />
+            </div>
+
+            {/* Demo Quick Unlock */}
+            <button
+              id="demo-unlock-btn"
+              type="button"
+              onClick={handleDemoUnlock}
+              className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-heading text-sm flex items-center justify-center gap-2 transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              Quick Demo Unlock (Reviewer Access)
+            </button>
+
+            <p className="text-center text-[11px] text-slate-500 font-mono mt-5">
+              Default passcode: <span className="text-emerald-400 font-bold">admin123</span>
+            </p>
+          </div>
+
+          {/* Back to customer link */}
+          <div className="flex justify-center mt-6">
+            <Link href="/customer" className="text-xs text-slate-500 hover:text-emerald-400 transition-colors font-mono flex items-center gap-1.5">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              Go to Customer View (Public)
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0b0f17] text-on-surface">
       <Navbar />
@@ -104,8 +281,12 @@ export default function HostDashboardPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#232834] pb-6">
           <div>
             <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs font-semibold uppercase tracking-wider">
-              <Shield className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4" />
               <span>Society & Apartment Monetization Portal</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                Admin Session Active
+              </span>
             </div>
             <h1 className="font-heading text-2xl md:text-4xl font-black text-white tracking-tight mt-1">
               Host Command Center
@@ -117,12 +298,21 @@ export default function HostDashboardPage() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/"
+              href="/customer"
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-white flex items-center gap-2 transition-colors"
             >
-              <span>View Driver Map</span>
+              <span>Customer Map</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
             </Link>
+            <button
+              type="button"
+              onClick={handleLock}
+              className="px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-mono flex items-center gap-2 transition-colors"
+              title="Lock and sign out of Host Panel"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Lock Panel</span>
+            </button>
           </div>
         </div>
 

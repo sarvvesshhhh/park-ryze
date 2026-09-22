@@ -342,7 +342,251 @@ export const MUMBAI_CURATED_LANDMARKS: Array<{
     coords: [72.8345, 19.1062],
     category: 'landmark',
   },
+
+  // ── NMIMS MPSTME & College Vicinity ───────────────────────────────────────
+  {
+    name: 'Mukesh Patel School of Technology (NMIMS MPSTME)',
+    aliases: ['mpstme', 'mukesh patel', 'nmims mpstme', 'mpstme vile parle', 'svkm mpstme', 'mukesh patel school of technology'],
+    subtitle: 'Bhaktivedanta Swami Marg, JVPD Scheme, Vile Parle West, Mumbai',
+    coords: [72.8368, 19.1085],
+    category: 'university',
+  },
+  {
+    name: 'MPSTME Tech Enclave Parking',
+    aliases: ['mpstme parking', 'mpstme tech enclave', 'bhaktivedanta swami marg parking'],
+    subtitle: 'Bhaktivedanta Swami Marg, Opp NMIMS MPSTME, Vile Parle West, Mumbai',
+    coords: [72.8370, 19.1082],
+    category: 'commercial',
+  },
+  {
+    name: 'JVPD Prime Commercial Plaza',
+    aliases: ['jvpd plaza', 'jvpd commercial', 'vl mehta road parking', 'jvpd prime'],
+    subtitle: 'V.L. Mehta Road, JVPD Scheme, Near NMIMS MPSTME, Vile Parle West, Mumbai',
+    coords: [72.8355, 19.1075],
+    category: 'commercial',
+  },
+
+  // ── Western Railway Line ───────────────────────────────────────────────────
+  {
+    name: 'Churchgate Railway Station (Western Railway Terminal)',
+    aliases: ['churchgate', 'churchgate station', 'churchgate terminus', 'western railway churchgate'],
+    subtitle: 'Marine Lines, Churchgate, South Mumbai',
+    coords: [72.8261, 18.9359],
+    category: 'station',
+  },
+  {
+    name: 'Mumbai Central Railway Station',
+    aliases: ['mumbai central', 'bombay central', 'mumbai central station', 'grant road station'],
+    subtitle: 'Mumbai Central, Mumbai',
+    coords: [72.8259, 18.9692],
+    category: 'station',
+  },
+  {
+    name: 'Dadar Railway Station (Western Line)',
+    aliases: ['dadar', 'dadar station', 'dadar west station', 'dadar railway'],
+    subtitle: 'Dadar West, Mumbai',
+    coords: [72.8410, 19.0183],
+    category: 'station',
+  },
+  {
+    name: 'Bandra Railway Station (Western Line)',
+    aliases: ['bandra station', 'bandra local', 'bandra west station', 'bandra railway station'],
+    subtitle: 'Station Road, Bandra West, Mumbai',
+    coords: [72.8391, 19.0596],
+    category: 'station',
+  },
+  {
+    name: 'Vile Parle Railway Station',
+    aliases: ['vile parle station', 'vile parle west station', 'vile parle railway'],
+    subtitle: 'Station Road, Vile Parle West, Mumbai',
+    coords: [72.8390, 19.0986],
+    category: 'station',
+  },
+  {
+    name: 'Santacruz Railway Station',
+    aliases: ['santacruz', 'santacruz station', 'santa cruz station', 'santacruz west station'],
+    subtitle: 'Santacruz West, Mumbai',
+    coords: [72.8371, 19.0810],
+    category: 'station',
+  },
+  {
+    name: 'Khar Road Railway Station',
+    aliases: ['khar', 'khar road', 'khar station', 'khar road station'],
+    subtitle: 'Khar Road, Bandra, Mumbai',
+    coords: [72.8356, 19.0707],
+    category: 'station',
+  },
+  {
+    name: 'Goregaon Railway Station',
+    aliases: ['goregaon', 'goregaon station', 'goregaon west station'],
+    subtitle: 'S.V. Road, Goregaon West, Mumbai',
+    coords: [72.8487, 19.1592],
+    category: 'station',
+  },
+  {
+    name: 'Malad Railway Station',
+    aliases: ['malad', 'malad station', 'malad west station', 'malad railway'],
+    subtitle: 'S.V. Road, Malad West, Mumbai',
+    coords: [72.8478, 19.1868],
+    category: 'station',
+  },
+  {
+    name: 'Kandivali Railway Station',
+    aliases: ['kandivali', 'kandivali station', 'kandivali west station'],
+    subtitle: 'S.V. Road, Kandivali West, Mumbai',
+    coords: [72.8474, 19.2050],
+    category: 'station',
+  },
+  {
+    name: 'Borivali Railway Station',
+    aliases: ['borivali', 'borivali station', 'borivali west station', 'borivali east station'],
+    subtitle: 'Borivali, Mumbai',
+    coords: [72.8547, 19.2285],
+    category: 'station',
+  },
+  {
+    name: 'Lower Parel Railway Station',
+    aliases: ['lower parel station', 'lower parel railway', 'prabhadevi station', 'lower parel'],
+    subtitle: 'Lower Parel, Mumbai',
+    coords: [72.8318, 18.9966],
+    category: 'station',
+  },
+
+  // ── Mumbai Metro Line 1 (Blue: Versova–Ghatkopar) ─────────────────────────
+  {
+    name: 'Versova Metro Station (Line 1)',
+    aliases: ['versova metro', 'versova metro station', 'line 1 versova', 'blue line versova'],
+    subtitle: 'Old Nagardas Road, Versova, Andheri West, Mumbai',
+    coords: [72.8173, 19.1320],
+    category: 'station',
+  },
+  {
+    name: 'D.N. Nagar Metro Station (Line 1)',
+    aliases: ['dn nagar metro', 'd n nagar metro', 'dn nagar station', 'line 1 dn nagar'],
+    subtitle: 'D.N. Nagar, Andheri West, Mumbai',
+    coords: [72.8230, 19.1275],
+    category: 'station',
+  },
+  {
+    name: 'Andheri Metro Station (Line 1)',
+    aliases: ['andheri metro station', 'andheri metro line 1', 'line 1 andheri'],
+    subtitle: 'Andheri, Mumbai',
+    coords: [72.8466, 19.1197],
+    category: 'station',
+  },
+  {
+    name: 'Chakala Metro Station (Line 1)',
+    aliases: ['chakala metro', 'chakala station', 'chakala metro line 1', 'chakala andheri east'],
+    subtitle: 'MIDC, Andheri East, Mumbai',
+    coords: [72.8591, 19.1133],
+    category: 'station',
+  },
+  {
+    name: 'Ghatkopar Metro Station (Line 1)',
+    aliases: ['ghatkopar metro', 'ghatkopar metro station', 'line 1 ghatkopar', 'blue line ghatkopar'],
+    subtitle: 'Ghatkopar East, Mumbai',
+    coords: [72.9075, 19.0862],
+    category: 'station',
+  },
+
+  // ── Mumbai Metro Line 3 (Aqua: Colaba–SEEPZ–Airport) ─────────────────────
+  {
+    name: 'BKC Metro Station (Line 3 – Aqua)',
+    aliases: ['bkc metro', 'bkc metro station', 'line 3 bkc', 'aqua line bkc', 'bkc aqua'],
+    subtitle: 'G Block, Bandra Kurla Complex, Mumbai',
+    coords: [72.8693, 19.0668],
+    category: 'station',
+  },
+  {
+    name: 'SEEPZ Metro Station (Line 3 – Aqua)',
+    aliases: ['seepz metro', 'seepz station', 'line 3 seepz', 'aqua line seepz', 'marol metro'],
+    subtitle: 'SEEPZ, Marol, Andheri East, Mumbai',
+    coords: [72.8702, 19.1145],
+    category: 'station',
+  },
+  {
+    name: 'CSMIA Airport Metro Station (Line 3 – Aqua)',
+    aliases: ['airport metro', 'csmia metro', 'airport line 3', 'aqua line airport', 'mumbai airport metro'],
+    subtitle: 'Chhatrapati Shivaji Maharaj International Airport, Andheri East, Mumbai',
+    coords: [72.8744, 19.0974],
+    category: 'station',
+  },
+  {
+    name: 'Vidyanagari Metro Station (Line 3 – Aqua)',
+    aliases: ['vidyanagari metro', 'kalina metro', 'line 3 vidyanagari', 'cst road metro'],
+    subtitle: 'Vidyanagari Road, Santacruz East, Mumbai',
+    coords: [72.8584, 19.0756],
+    category: 'station',
+  },
+
+  // ── Mumbai Metro Line 7 (Red: Andheri East–Dahisar East) ──────────────────
+  {
+    name: 'Gundavali Metro Station (Line 7 – Red)',
+    aliases: ['gundavali metro', 'gundavali station', 'line 7 gundavali', 'red line andheri'],
+    subtitle: 'Western Express Highway, Andheri East, Mumbai',
+    coords: [72.8695, 19.1232],
+    category: 'station',
+  },
+  {
+    name: 'Aarey Metro Station (Line 7 – Red)',
+    aliases: ['aarey metro', 'aarey station', 'line 7 aarey', 'aarey colony metro', 'red line goregaon east'],
+    subtitle: 'Western Express Highway, Goregaon East, Mumbai',
+    coords: [72.8670, 19.1595],
+    category: 'station',
+  },
+  {
+    name: 'Goregaon Metro Station (Line 7 – Red)',
+    aliases: ['goregaon metro', 'goregaon east metro', 'line 7 goregaon', 'red line goregaon'],
+    subtitle: 'Western Express Highway, Goregaon East, Mumbai',
+    coords: [72.8625, 19.1620],
+    category: 'station',
+  },
+  {
+    name: 'Pahadi Eksar Metro Station (Line 7 – Red)',
+    aliases: ['pahadi eksar metro', 'borivali east metro', 'line 7 borivali east', 'pahadi metro'],
+    subtitle: 'Western Express Highway, Borivali East, Mumbai',
+    coords: [72.8601, 19.2108],
+    category: 'station',
+  },
+
+  // ── Corporate Parks & Commercial Hubs (new) ───────────────────────────────
+  {
+    name: 'Nesco IT Park & Bombay Exhibition Centre',
+    aliases: ['nesco', 'nesco it park', 'bombay exhibition centre', 'bec goregaon', 'nesco goregaon'],
+    subtitle: 'Western Express Highway, Goregaon East, Mumbai',
+    coords: [72.8584, 19.1528],
+    category: 'commercial',
+  },
+  {
+    name: 'Nirlon Knowledge Park',
+    aliases: ['nirlon', 'nirlon knowledge park', 'nirlon goregaon', 'nirlon it park'],
+    subtitle: 'Off Western Express Highway, Goregaon East, Mumbai',
+    coords: [72.8608, 19.1566],
+    category: 'commercial',
+  },
+  {
+    name: 'Mindspace Business Park',
+    aliases: ['mindspace', 'mindspace malad', 'malad it park', 'mindspace business park'],
+    subtitle: 'Link Road, Malad West, Mumbai',
+    coords: [72.8354, 19.1762],
+    category: 'commercial',
+  },
+  {
+    name: 'Parinee Crescenzo & One BKC',
+    aliases: ['one bkc', 'parinee crescenzo', 'crescenzo bkc', 'bkc commercial tower'],
+    subtitle: 'G Block, Bandra Kurla Complex, Mumbai',
+    coords: [72.8672, 19.0655],
+    category: 'commercial',
+  },
+  {
+    name: 'Peninsula Corporate Park (Lower Parel)',
+    aliases: ['peninsula corporate park', 'peninsula park', 'lower parel corporate', 'peninsula parel'],
+    subtitle: 'GK Marg, Lower Parel, Mumbai',
+    coords: [72.8283, 19.0025],
+    category: 'commercial',
+  },
 ];
+
 
 /**
  * Real Multi-Tier Hybrid Search

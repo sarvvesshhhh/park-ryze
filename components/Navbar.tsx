@@ -36,24 +36,27 @@ export default function Navbar() {
       {/* Center Nav Links - Desktop */}
       <nav className="hidden md:flex items-center gap-1 bg-surface-container/60 p-1 rounded-full border border-white/5">
         <Link
-          href="/"
+          href="/customer"
           className={`px-4 py-1.5 rounded-full text-xs font-medium font-heading transition-all ${
             !isHostPage
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm'
               : 'text-on-surface-variant hover:text-white'
           }`}
         >
-          Find Parking
+          Customer View
         </Link>
         <Link
           href="/host"
-          className={`px-4 py-1.5 rounded-full text-xs font-medium font-heading transition-all ${
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium font-heading transition-all ${
             isHostPage
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm'
               : 'text-on-surface-variant hover:text-white'
           }`}
         >
-          Host Portal
+          <span>Host Panel</span>
+          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold uppercase">
+            Admin
+          </span>
         </Link>
       </nav>
 
@@ -74,14 +77,14 @@ export default function Navbar() {
 
         {/* Switch Mode Button */}
         <Link
-          href={isHostPage ? '/' : '/host'}
+          href={isHostPage ? '/customer' : '/host'}
           className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-[0_0_12px_rgba(16,185,129,0.35)] active:scale-95"
         >
           <ArrowRightLeft className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">
-            {isHostPage ? 'Switch to Driver' : 'Switch to Host'}
+            {isHostPage ? 'Switch to Customer' : 'Switch to Host Admin'}
           </span>
-          <span className="sm:hidden">{isHostPage ? 'Driver' : 'Host'}</span>
+          <span className="sm:hidden">{isHostPage ? 'Customer' : 'Host'}</span>
         </Link>
 
         {/* Stitch MCP Theme Toggle Button */}
