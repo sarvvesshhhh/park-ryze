@@ -15,7 +15,7 @@ export default function Navbar() {
   const toggleThemeMode = useParkingStore((s) => s.toggleThemeMode);
 
   return (
-    <header className="fixed top-3 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-full bg-[#0f131c]/80 backdrop-blur-xl border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.6)] flex justify-between items-center px-4 md:px-7 py-2.5 z-40">
+    <header className="fixed top-3 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl rounded-full bg-[#0c101a]/75 backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] flex justify-between items-center px-4 md:px-7 py-2.5 z-40 transition-all">
       {/* Brand & Minimal Geometric Badge */}
       <Link href="/" className="flex items-center gap-2.5 group">
         <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center group-hover:scale-105 transition-transform shadow-xs">

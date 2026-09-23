@@ -211,7 +211,7 @@ export default function HostDashboardPage() {
             <div className="font-heading text-lg font-bold text-white tracking-tight">Park Ryze</div>
           </div>
 
-          <div className="bg-[#111824] rounded-2xl p-6 sm:p-7 border border-slate-800 shadow-xl">
+          <div className="bg-[#101522]/85 backdrop-blur-2xl rounded-2xl p-6 sm:p-7 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)]">
             <div className="mb-6">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-emerald-400 mb-1">
                 <Lock className="w-3.5 h-3.5" />
@@ -237,7 +237,7 @@ export default function HostDashboardPage() {
                     value={passInput}
                     onChange={(e) => { setPassInput(e.target.value); setPassError(''); }}
                     placeholder="Admin passcode…"
-                    className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none transition-colors font-mono"
+                    className="w-full bg-[#0a0e16]/80 border border-white/10 rounded-xl pl-9 pr-9 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500/80 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all font-mono"
                     autoFocus
                   />
                   <button
@@ -260,7 +260,7 @@ export default function HostDashboardPage() {
                 id="unlock-host-btn"
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed shadow-sm"
+                className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 font-medium text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:cursor-not-allowed shadow-sm active:scale-98"
               >
                 {isSubmitting ? (
                   <>
@@ -616,7 +616,12 @@ export default function HostDashboardPage() {
               {/* Save Schedule Button */}
               <div className="flex items-center justify-between pt-2">
                 <div className="text-xs font-mono text-emerald-400">
-                  {scheduleSaved && <span>✓ Schedule synchronized with marketplace</span>}
+                  {scheduleSaved && (
+                    <span className="flex items-center gap-1.5 animate-in fade-in">
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Schedule synchronized with marketplace</span>
+                    </span>
+                  )}
                 </div>
                 <button
                   type="button"

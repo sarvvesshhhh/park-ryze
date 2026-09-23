@@ -142,8 +142,8 @@ export default function MapDiscovery() {
       const startMarkerHtml = isCustomStartPoint
         ? `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/60 text-amber-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
-              <span>📍</span>
+            <div class="px-2.5 py-1 rounded-full bg-slate-900/90 backdrop-blur-md border border-amber-500/60 text-amber-300 font-sans text-[11px] font-semibold shadow-lg whitespace-nowrap mb-0.5 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
               <span>Start Point</span>
             </div>
             <div class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm ring-2 ring-amber-500/30"></div>
@@ -151,8 +151,8 @@ export default function MapDiscovery() {
         `
         : `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-emerald-500/60 text-emerald-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
-              <span>📍</span>
+            <div class="px-2.5 py-1 rounded-full bg-slate-900/90 backdrop-blur-md border border-emerald-500/60 text-emerald-300 font-sans text-[11px] font-semibold shadow-lg whitespace-nowrap mb-0.5 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               <span>Start Point</span>
             </div>
             <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm ring-2 ring-emerald-500/30"></div>
@@ -162,8 +162,8 @@ export default function MapDiscovery() {
       const startIcon = L.divIcon({
         className: 'custom-start-pin',
         html: startMarkerHtml,
-        iconSize: [100, 36],
-        iconAnchor: [50, 32],
+        iconSize: [110, 36],
+        iconAnchor: [55, 32],
       });
 
       const startMarker = L.marker([startLat, startLng], {
@@ -191,23 +191,23 @@ export default function MapDiscovery() {
         const popupContent = document.createElement('div');
         popupContent.className = 'p-2 space-y-2 font-sans text-xs min-w-[210px]';
         popupContent.innerHTML = `
-          <div class="text-[11px] font-semibold text-slate-200 flex justify-between items-center pb-1 border-b border-slate-700/60">
-            <span class="flex items-center gap-1">
-              <span>📍</span>
-              <span>Map Location</span>
+          <div class="text-[11px] font-semibold text-slate-200 flex justify-between items-center pb-1 border-b border-white/10">
+            <span class="flex items-center gap-1.5 text-emerald-400">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="text-slate-200 font-medium">Map Location</span>
             </span>
-            <span class="text-slate-400 font-normal text-[10px]">${distFromStart} km away</span>
+            <span class="text-slate-400 font-normal text-[10px] font-mono">${distFromStart} km away</span>
           </div>
           <div class="text-[11px] text-slate-400 font-mono">
             ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E
           </div>
           <div class="flex flex-col gap-1.5 pt-1">
-            <button id="set-as-start-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-600/60 text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs">
-              <span>📍</span>
+            <button id="set-as-start-btn" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-medium transition-all flex items-center gap-2 shadow-xs cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
               <span>Set as Start / Initial Point</span>
             </button>
-            <button id="search-nearby-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition-colors flex items-center gap-1.5">
-              <span>🅿️</span>
+            <button id="search-nearby-btn" class="w-full text-left px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 text-xs font-medium transition-all flex items-center gap-2 cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>
               <span>Find Parking Slots Near Here</span>
             </button>
           </div>
@@ -273,8 +273,8 @@ export default function MapDiscovery() {
       const markerHtml = isCustomStartPoint
         ? `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/60 text-amber-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
-              <span>📍</span>
+            <div class="px-2.5 py-1 rounded-full bg-slate-900/90 backdrop-blur-md border border-amber-500/60 text-amber-300 font-sans text-[11px] font-semibold shadow-lg whitespace-nowrap mb-0.5 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
               <span>Start Point</span>
             </div>
             <div class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm ring-2 ring-amber-500/30"></div>
@@ -282,8 +282,8 @@ export default function MapDiscovery() {
         `
         : `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-emerald-500/60 text-emerald-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
-              <span>📍</span>
+            <div class="px-2.5 py-1 rounded-full bg-slate-900/90 backdrop-blur-md border border-emerald-500/60 text-emerald-300 font-sans text-[11px] font-semibold shadow-lg whitespace-nowrap mb-0.5 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               <span>Start Point</span>
             </div>
             <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm ring-2 ring-emerald-500/30"></div>
@@ -293,8 +293,8 @@ export default function MapDiscovery() {
       const startIcon = L.divIcon({
         className: 'custom-start-pin',
         html: markerHtml,
-        iconSize: [100, 36],
-        iconAnchor: [50, 32],
+        iconSize: [110, 36],
+        iconAnchor: [55, 32],
       });
 
       startMarkerRef.current.setIcon(startIcon);
@@ -358,56 +358,57 @@ export default function MapDiscovery() {
           : '';
 
         const targetDestinationBadge = isSelected
-          ? `<span class="ml-0.5 px-1.5 py-0.5 rounded bg-emerald-400 text-slate-950 text-[9px] font-bold uppercase tracking-tight flex items-center gap-0.5"><span>🎯</span><span>SLOT</span></span>`
+          ? `<span class="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-bold uppercase tracking-wider shadow-xs">SLOT</span>`
           : '';
 
         let markerHtml = '';
 
         if (isAvailable) {
-          // ── Bespoke Available Marker (Crisp slate pill with emerald indicator) ──
+          // ── Bespoke Available Marker (Native iOS Frosted Glass Pill with Live Indicator) ──
           markerHtml = `
-            <div class="cursor-pointer select-none transition-transform duration-150 hover:-translate-y-0.5 group">
+            <div class="cursor-pointer select-none transition-all duration-200 hover:-translate-y-1 group">
               <div class="flex flex-col items-center">
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md ${
+                <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full ${
                   isSelected
-                    ? 'bg-slate-900 text-white font-semibold border-2 border-emerald-400 shadow-xl scale-110 ring-2 ring-emerald-500/40'
-                    : 'bg-slate-900/95 text-slate-100 border border-slate-700/80 hover:border-emerald-500/60 shadow-sm'
-                } text-xs">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-                  <span class="font-semibold text-white">₹${dynamicRate}</span>
-                  <span class="text-slate-400 text-[11px]">/hr</span>
-                  <span class="ml-0.5 px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-medium">
-                    ${lot.availableBays} bays
+                    ? 'bg-slate-900/90 text-white font-semibold border-2 border-emerald-400 shadow-2xl scale-105 ring-4 ring-emerald-500/30'
+                    : 'bg-slate-900/80 hover:bg-slate-900/95 text-slate-100 border border-emerald-500/40 hover:border-emerald-400 shadow-lg hover:shadow-xl'
+                } backdrop-blur-md text-xs transition-all">
+                  <span class="relative flex h-2 w-2 shrink-0">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  </span>
+                  <span class="font-bold text-white tracking-tight">₹${dynamicRate}</span>
+                  <span class="text-slate-400 text-[10px]">/hr</span>
+                  <span class="ml-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9.5px] font-semibold whitespace-nowrap">
+                    ${lot.availableBays} free
                   </span>
                   ${badgeHtml}
                   ${targetDestinationBadge}
                 </div>
-                <div class="w-2 h-2 bg-slate-900 rotate-45 mx-auto -mt-1 border-r border-b ${
-                  isSelected ? 'border-emerald-400' : 'border-slate-700/80'
+                <div class="w-2.5 h-2.5 bg-slate-900/90 rotate-45 mx-auto -mt-1.5 border-r border-b ${
+                  isSelected ? 'border-emerald-400' : 'border-emerald-500/40'
                 }"></div>
               </div>
             </div>
           `;
         } else {
-          // ── Bespoke Unavailable / Full Marker (Muted slate with subtle red dot) ──
+          // ── Bespoke Unavailable / Full Marker (Muted, Distinctly Receded Frosted Pill) ──
           markerHtml = `
-            <div class="cursor-pointer select-none transition-transform duration-150 hover:-translate-y-0.5 opacity-75 hover:opacity-100 group">
+            <div class="cursor-pointer select-none transition-all duration-200 opacity-55 hover:opacity-85 group">
               <div class="flex flex-col items-center">
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md ${
+                <div class="flex items-center gap-1.5 px-2 py-1 rounded-full ${
                   isSelected
-                    ? 'bg-slate-900 text-slate-300 font-semibold border-2 border-rose-400 shadow-xl scale-110 ring-2 ring-rose-500/40'
-                    : 'bg-slate-900/90 text-slate-400 border border-slate-800 shadow-sm'
-                } text-xs">
-                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80 shrink-0"></span>
-                  <span class="line-through text-slate-500 text-[11px]">₹${dynamicRate}/hr</span>
-                  <span class="px-1 py-0.2 rounded bg-rose-500/10 text-rose-300/90 text-[10px] font-medium">
+                    ? 'bg-slate-950/80 text-slate-300 font-semibold border border-rose-400 shadow-lg scale-105 ring-2 ring-rose-500/30'
+                    : 'bg-slate-950/60 text-slate-400 border border-white/5 shadow-xs'
+                } backdrop-blur-sm text-xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0"></span>
+                  <span class="line-through text-slate-500 text-[10.5px]">₹${dynamicRate}/hr</span>
+                  <span class="px-1.5 py-0.5 rounded-full bg-slate-800/80 text-slate-400 text-[9px] font-medium uppercase tracking-wider">
                     Full
                   </span>
                   ${targetDestinationBadge}
                 </div>
-                <div class="w-2 h-2 bg-slate-900 rotate-45 mx-auto -mt-1 border-r border-b ${
-                  isSelected ? 'border-rose-400' : 'border-slate-800'
-                }"></div>
+                <div class="w-2 h-2 bg-slate-950/70 rotate-45 mx-auto -mt-1 border-r border-b border-white/5"></div>
               </div>
             </div>
           `;
@@ -416,14 +417,14 @@ export default function MapDiscovery() {
         const customIcon = L.divIcon({
           className: 'custom-lot-pin',
           html: markerHtml,
-          iconSize: [140, 36],
-          iconAnchor: [70, 32],
+          iconSize: [160, 42],
+          iconAnchor: [80, 36],
         });
 
         const [lat, lng] = lot.coordinates;
         const marker = L.marker([lat, lng], {
           icon: customIcon,
-          zIndexOffset: isSelected ? 500 : isAvailable ? 150 : 80,
+          zIndexOffset: isSelected ? 600 : isAvailable ? 250 : 60,
         });
 
         marker.on('click', () => {

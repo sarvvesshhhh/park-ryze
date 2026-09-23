@@ -22,7 +22,8 @@ import {
   SlidersHorizontal,
   ChevronDown,
   ShieldCheck,
-  Zap
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { searchHybridPlaces, GeocodingResult, LandmarkCategory } from '@/lib/mapbox';
 
@@ -179,13 +180,13 @@ export default function SearchCapsule() {
           if (!isCustomStartPoint && !selectedLot) return null;
 
           return (
-            <div className="flex flex-wrap items-center justify-between px-3 py-1.5 rounded-xl bg-slate-900/95 border border-emerald-500/40 text-emerald-300 text-xs font-mono gap-2 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xs font-mono gap-2 shadow-lg">
               <div className="flex items-center gap-2 truncate">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
                 <span className="truncate">
                   Start: <strong className="text-white">{startLocationName}</strong>
                 </span>
-                <span className="text-slate-500">➔</span>
+                <ArrowRight className="w-3 h-3 text-slate-500 shrink-0" />
                 <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0"></span>
                 <span className="truncate">
                   Parking Slot: <strong className="text-white">{selectedLot ? selectedLot.name : 'Select a Slot on Map'}</strong>

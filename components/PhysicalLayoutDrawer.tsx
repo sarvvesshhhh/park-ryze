@@ -206,7 +206,14 @@ export default function PhysicalLayoutDrawer() {
                     : 'bg-white/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-300 border border-emerald-500/30'
                 }`}
               >
-                {selectedBayId === bayRecommendation.recommendedBay.id ? '✓ Selected' : 'Select this Bay'}
+                {selectedBayId === bayRecommendation.recommendedBay.id ? (
+                  <span className="flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Selected</span>
+                  </span>
+                ) : (
+                  <span>Select this Bay</span>
+                )}
               </button>
             </div>
           )}
@@ -220,8 +227,10 @@ export default function PhysicalLayoutDrawer() {
                 <Compass className="w-3.5 h-3.5 text-emerald-400" />
                 <span>ORIENTATION // NORTH GULMOHAR RD AXIS</span>
               </span>
-              <span className="text-slate-400 font-semibold tracking-wider">
-                ENTRY FLOW ➔ {lot.entryGate.toUpperCase()}
+              <span className="text-slate-400 font-semibold tracking-wider flex items-center gap-1.5">
+                <span>ENTRY FLOW</span>
+                <ArrowRight className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{lot.entryGate.toUpperCase()}</span>
               </span>
             </div>
 

@@ -24,7 +24,10 @@ import {
   Play,
   Pause,
   FastForward,
-  Car
+  Car,
+  Zap,
+  Info,
+  ArrowRight
 } from 'lucide-react';
 
 export default function NavigationOverlay() {
@@ -89,19 +92,22 @@ export default function NavigationOverlay() {
       <div className="pointer-events-auto w-full max-w-xl bg-[#0d111a]/95 backdrop-blur-2xl border border-emerald-500/40 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300">
         
         {/* Top Header Bar with Live Origin & Route Details */}
-        <div className="bg-[#121824] px-4 py-2 border-b border-white/5 flex items-center justify-between text-xs font-mono">
+        <div className="bg-[#101522]/90 backdrop-blur-md px-4 py-2 border-b border-white/10 flex items-center justify-between text-xs font-mono">
           <div className="flex items-center gap-2 truncate">
             <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
             </span>
-            <span className="text-emerald-400 font-bold uppercase tracking-wider truncate">
-              {isSimActive ? '⚡ SIMULATING LIVE DRIVE' : isCustomStartPoint ? 'CUSTOM ORIGIN ROUTE' : 'LIVE GPS GUIDANCE'}
-            </span>
-            <span className="text-slate-500 hidden sm:inline">•</span>
-            <span className="text-slate-300 truncate hidden sm:inline font-sans text-[11px]">
-              {activeRoute.originName || startLocationName} ➔ {activeRoute.destinationName}
-            </span>
+            <div className="flex items-center gap-1 text-emerald-400 font-bold uppercase tracking-wider truncate">
+              {isSimActive && <Zap className="w-3 h-3 shrink-0 text-emerald-400" />}
+              <span>{isSimActive ? 'Simulating Live Drive' : isCustomStartPoint ? 'Custom Origin Route' : 'Live GPS Guidance'}</span>
+            </div>
+            <span className="text-slate-600 hidden sm:inline">•</span>
+            <div className="text-slate-300 truncate hidden sm:flex items-center gap-1 font-sans text-[11px]">
+              <span>{activeRoute.originName || startLocationName}</span>
+              <ArrowRight className="w-3 h-3 text-slate-500 shrink-0" />
+              <span>{activeRoute.destinationName}</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -291,8 +297,11 @@ export default function NavigationOverlay() {
         </div>
 
         {/* Tactical Drag Hint */}
-        <div className="bg-[#0c1017] px-4 py-1.5 border-t border-white/5 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-          <span>💡 Drag 📍 Start Pin on map to adjust departure point</span>
+        <div className="bg-[#0b0f17]/90 px-4 py-1.5 border-t border-white/5 text-[10px] font-mono text-slate-400 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Info className="w-3 h-3 text-slate-500 shrink-0" />
+            <span>Drag Start Pin on map to adjust departure point</span>
+          </div>
           {isCustomStartPoint && (
             <span className="text-amber-400 font-semibold">Custom Origin Active</span>
           )}
