@@ -1611,44 +1611,4 @@ export const INITIAL_PARKING_LOTS: ParkingLot[] = [
   },
 ];
 
-export const INITIAL_HOST_REQUESTS: HostBookingRequest[] = [
-  {
-    id: 'req-01',
-    driverName: 'Aditya Roy',
-    bayId: 'B-42',
-    tower: 'Tower B',
-    vehiclePlate: 'MH 02 DW 8912',
-    vehicleModel: 'Hyundai Creta',
-    timeSlot: 'Today, 14:00 - 18:00',
-    duration: '4 Hours',
-    payout: 200,
-    status: 'pending',
-    receivedAt: '3 mins ago',
-  },
-  {
-    id: 'req-02',
-    driverName: 'Pooja Bhatt',
-    bayId: 'A-12',
-    tower: 'Tower A',
-    vehiclePlate: 'MH 01 CE 3310',
-    vehicleModel: 'Honda City',
-    timeSlot: 'Today, 11:30 - 14:30',
-    duration: '3 Hours',
-    payout: 150,
-    status: 'accepted',
-    receivedAt: '45 mins ago',
-  },
-  {
-    id: 'req-03',
-    driverName: 'Vikram Joshi',
-    bayId: 'B-18',
-    tower: 'Tower B',
-    vehiclePlate: 'MH 03 BT 4419',
-    vehicleModel: 'Tata Nexon EV',
-    timeSlot: 'Tomorrow, 09:00 - 17:00',
-    duration: '8 Hours',
-    payout: 400,
-    status: 'pending',
-    receivedAt: '12 mins ago',
-  },
-];
+export const INITIAL_HOST_REQUESTS: HostBookingRequest[] = [];

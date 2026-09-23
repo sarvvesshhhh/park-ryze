@@ -108,17 +108,18 @@ export default function HostDashboardPage() {
   const toggleAutoCheckIn = useParkingStore((s) => s.toggleAutoCheckIn);
   const addNewHostListing = useParkingStore((s) => s.addNewHostListing);
 
-  // Listing Form State
-  const [societyName, setSocietyName] = useState('Gulmohar Heights CHS');
-  const [tower, setTower] = useState('Wing B');
-  const [bayNumber, setBayNumber] = useState('B-42');
-  const [hourlyRate, setHourlyRate] = useState('45');
+  // Listing Form State (initialized clean, no dummy pre-filled values)
+  const [societyName, setSocietyName] = useState('');
+  const [tower, setTower] = useState('');
+  const [bayNumber, setBayNumber] = useState('');
+  const [hourlyRate, setHourlyRate] = useState('');
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([
     'Hatchback',
     'Sedan',
     'SUV',
   ]);
   const [listingSuccess, setListingSuccess] = useState(false);
+  const [lastListedBay, setLastListedBay] = useState('');
 
   // Availability Scheduler State
   const [activeDays, setActiveDays] = useState<string[]>(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
@@ -140,18 +141,27 @@ export default function HostDashboardPage() {
 
   const handleAddListing = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!societyName || !bayNumber) return;
+    if (!societyName.trim() || !bayNumber.trim()) return;
 
+    const bayToReport = bayNumber.trim();
     addNewHostListing({
-      societyName,
-      tower,
-      bayNumber,
+      societyName: societyName.trim(),
+      tower: tower.trim() || 'Main Wing',
+      bayNumber: bayToReport,
       hourlyRate: Number(hourlyRate) || 40,
       compatibility: selectedVehicles,
     });
 
+    setLastListedBay(bayToReport);
     setListingSuccess(true);
-    setTimeout(() => setListingSuccess(false), 3000);
+    setSocietyName('');
+    setTower('');
+    setBayNumber('');
+    setHourlyRate('');
+    setTimeout(() => {
+      setListingSuccess(false);
+      setLastListedBay('');
+    }, 3500);
   };
 
   const handleSaveSchedule = () => {
@@ -161,16 +171,23 @@ export default function HostDashboardPage() {
 
   const parkingLots = useParkingStore((s) => s.parkingLots);
 
-  // Compute live dynamic analytics
+  // Compute live dynamic analytics from real state (no hardcoded dummy baseline)
   const acceptedPayoutTotal = hostRequests
     .filter((r) => r.status === 'accepted')
     .reduce((sum, r) => sum + r.payout, 0);
-  const totalWeeklyEarnings = 4250 + acceptedPayoutTotal;
+  const totalWeeklyEarnings = acceptedPayoutTotal;
 
   const totalBays = parkingLots.reduce((sum, l) => sum + l.totalBays, 0);
   const availableBays = parkingLots.reduce((sum, l) => sum + l.availableBays, 0);
   const occupiedBays = Math.max(0, totalBays - availableBays);
-  const occupancyPercent = totalBays > 0 ? Math.round((occupiedBays / totalBays) * 100) : 75;
+  const occupancyPercent = totalBays > 0 ? Math.round((occupiedBays / totalBays) * 100) : 0;
+
+  const totalHoursHosted = hostRequests
+    .filter((r) => r.status === 'accepted')
+    .reduce((sum, r) => {
+      const match = r.duration?.match(/\d+/);
+      return sum + (match ? parseInt(match[0], 10) : 0);
+    }, 0);
 
   // ─── Admin Access Barrier Screen ─────────────────────────────────────────
   if (isCheckingSession) {
@@ -335,10 +352,16 @@ export default function HostDashboardPage() {
             </div>
             <div className="my-3">
               <div className="font-mono text-3xl font-black text-white">₹{totalWeeklyEarnings.toLocaleString()}</div>
-              <div className="flex items-center gap-1 text-emerald-400 text-xs font-mono mt-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>+18.4% vs last week</span>
-              </div>
+              {totalWeeklyEarnings > 0 ? (
+                <div className="flex items-center gap-1 text-emerald-400 text-xs font-mono mt-1">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Live payouts accrued</span>
+                </div>
+              ) : (
+                <div className="text-slate-500 text-xs font-mono mt-1">
+                  No payouts accrued yet
+                </div>
+              )}
             </div>
             <div className="text-[11px] text-slate-500 font-mono">Auto-credited every Monday</div>
           </div>
@@ -359,7 +382,7 @@ export default function HostDashboardPage() {
                 <div className="bg-sky-400 h-full rounded-full" style={{ width: `${occupancyPercent}%` }} />
               </div>
             </div>
-            <div className="text-[11px] text-slate-500 font-mono">Peak hours: 10:00 - 19:00</div>
+            <div className="text-[11px] text-slate-500 font-mono">Live Ground IoT Sensor Grid</div>
           </div>
 
           {/* Card 3: Active Bookings */}
@@ -397,12 +420,12 @@ export default function HostDashboardPage() {
               </div>
             </div>
             <div className="my-3">
-              <div className="font-mono text-3xl font-black text-white">142 hrs</div>
+              <div className="font-mono text-3xl font-black text-white">{totalHoursHosted} hrs</div>
               <div className="text-xs text-on-surface-variant font-mono mt-1">
                 Across {parkingLots.length} registered society facilities
               </div>
             </div>
-            <div className="text-[11px] text-slate-500 font-mono">Lifetime total: 580 hrs</div>
+            <div className="text-[11px] text-slate-500 font-mono">Live hosted duration</div>
           </div>
         </section>
 
@@ -445,67 +468,79 @@ export default function HostDashboardPage() {
 
               {/* Requests List */}
               <div className="space-y-3">
-                {hostRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="p-4 rounded-xl bg-[#11141d] border border-[#2B313E] hover:border-emerald-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-bold text-white">
-                          {req.bayId} ({req.tower})
-                        </span>
-                        <span className="opacity-30">•</span>
-                        <span className="text-xs font-sans text-emerald-400 font-semibold">
-                          ₹{req.payout} payout
-                        </span>
-                        <span className="opacity-30">•</span>
-                        <span
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded uppercase font-bold ${
-                            req.status === 'accepted'
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                              : req.status === 'declined'
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                              : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                          }`}
-                        >
-                          {req.status}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-slate-300 font-sans">
-                        Driver: <strong className="text-white">{req.driverName}</strong> • {req.vehicleModel} ({req.vehiclePlate})
-                      </p>
-                      <p className="text-[11px] text-on-surface-variant font-mono">
-                        Slot: {req.timeSlot} • {req.receivedAt}
-                      </p>
+                {hostRequests.length === 0 ? (
+                  <div className="text-center py-10 px-4 rounded-xl bg-[#11141d] border border-[#2B313E] space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                      <Radio className="w-5 h-5 text-slate-500" />
                     </div>
-
-                    {/* Action Buttons */}
-                    {req.status === 'pending' ? (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => acceptHostRequest(req.id)}
-                          className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading text-xs font-bold transition-all shadow-sm active:scale-95"
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => declineHostRequest(req.id)}
-                          className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white border border-white/10 font-heading text-xs transition-colors"
-                        >
-                          Decline
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="text-xs font-mono text-slate-500 sm:text-right">
-                        {req.status === 'accepted' ? 'Barrier Code Dispatched' : 'Request Closed'}
-                      </div>
-                    )}
+                    <h3 className="font-heading text-sm font-bold text-white">No Live Reservation Requests</h3>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto font-sans leading-relaxed">
+                      Incoming booking requests from commuters and drivers booking your bays will stream here in real time.
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  hostRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="p-4 rounded-xl bg-[#11141d] border border-[#2B313E] hover:border-emerald-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-bold text-white">
+                            {req.bayId} ({req.tower})
+                          </span>
+                          <span className="opacity-30">•</span>
+                          <span className="text-xs font-sans text-emerald-400 font-semibold">
+                            ₹{req.payout} payout
+                          </span>
+                          <span className="opacity-30">•</span>
+                          <span
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded uppercase font-bold ${
+                              req.status === 'accepted'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : req.status === 'declined'
+                                ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            }`}
+                          >
+                            {req.status}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-slate-300 font-sans">
+                          Driver: <strong className="text-white">{req.driverName}</strong> • {req.vehicleModel} ({req.vehiclePlate})
+                        </p>
+                        <p className="text-[11px] text-on-surface-variant font-mono">
+                          Slot: {req.timeSlot} • {req.receivedAt}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      {req.status === 'pending' ? (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => acceptHostRequest(req.id)}
+                            className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => declineHostRequest(req.id)}
+                            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-on-surface-variant hover:text-white border border-white/10 font-heading text-xs transition-colors cursor-pointer"
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-xs font-mono text-slate-500 sm:text-right">
+                          {req.status === 'accepted' ? 'Barrier Code Dispatched' : 'Request Closed'}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -674,6 +709,7 @@ export default function HostDashboardPage() {
                       max="500"
                       value={hourlyRate}
                       onChange={(e) => setHourlyRate(e.target.value)}
+                      placeholder="50"
                       className="w-full bg-[#111824] border border-[#2B313E] rounded-xl pl-8 pr-3.5 py-2.5 text-xs md:text-sm font-mono text-white focus:border-emerald-500 outline-none transition-all"
                     />
                   </div>
@@ -721,7 +757,7 @@ export default function HostDashboardPage() {
                 {listingSuccess && (
                   <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2 animate-in fade-in">
                     <Check className="w-4 h-4" />
-                    <span>Bay {bayNumber} published live to Park Ryze map!</span>
+                    <span>Bay {lastListedBay} published live to Park Ryze map!</span>
                   </div>
                 )}
 
