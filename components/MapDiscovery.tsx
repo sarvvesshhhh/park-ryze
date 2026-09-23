@@ -29,7 +29,6 @@ export default function MapDiscovery() {
   const tileLayerRef = useRef<any>(null); // Active Leaflet TileLayer
   const markersLayerRef = useRef<any>(null); // LayerGroup for lot markers
   const startMarkerRef = useRef<any>(null); // Draggable Start Point / GPS Marker
-  const destinationMarkerRef = useRef<any>(null); // Draggable Destination / Park Marker
   const radiusCircleRef = useRef<any>(null); // Search Radius Radar Circle
   const simulatedCarMarkerRef = useRef<any>(null); // Simulated driving vehicle marker
   const routeLayersRef = useRef<{ glow?: any; core?: any }>({});
@@ -54,12 +53,6 @@ export default function MapDiscovery() {
   const isCustomStartPoint = useParkingStore((s) => s.isCustomStartPoint);
   const setCustomStartPoint = useParkingStore((s) => s.setCustomStartPoint);
   const resetToGpsLocation = useParkingStore((s) => s.resetToGpsLocation);
-
-  // Destination / Park
-  const destinationLocation = useParkingStore((s) => s.destinationLocation);
-  const destinationName = useParkingStore((s) => s.destinationName);
-  const isCustomDestination = useParkingStore((s) => s.isCustomDestination);
-  const setDestinationPoint = useParkingStore((s) => s.setDestinationPoint);
 
   const searchQuery = useParkingStore((s) => s.searchQuery);
   const vehicleType = useParkingStore((s) => s.vehicleType);
@@ -145,30 +138,32 @@ export default function MapDiscovery() {
       const markersLayer = L.layerGroup().addTo(map);
       markersLayerRef.current = markersLayer;
 
-      // Draggable Start Point Marker
+      // Draggable Start / Initial Point Marker
       const startMarkerHtml = isCustomStartPoint
         ? `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-sans text-[11px] font-medium shadow-sm whitespace-nowrap mb-0.5">
-              Start
+            <div class="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/60 text-amber-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
+              <span>📍</span>
+              <span>Start Point</span>
             </div>
-            <div class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm"></div>
+            <div class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm ring-2 ring-amber-500/30"></div>
           </div>
         `
         : `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-sans text-[11px] font-medium shadow-sm whitespace-nowrap mb-0.5">
-              Start
+            <div class="px-2 py-0.5 rounded bg-slate-900 border border-emerald-500/60 text-emerald-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
+              <span>📍</span>
+              <span>Start Point</span>
             </div>
-            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm"></div>
+            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm ring-2 ring-emerald-500/30"></div>
           </div>
         `;
 
       const startIcon = L.divIcon({
         className: 'custom-start-pin',
         html: startMarkerHtml,
-        iconSize: [80, 36],
-        iconAnchor: [40, 32],
+        iconSize: [100, 36],
+        iconAnchor: [50, 32],
       });
 
       const startMarker = L.marker([startLat, startLng], {
@@ -188,68 +183,32 @@ export default function MapDiscovery() {
 
       startMarkerRef.current = startMarker;
 
-      // Draggable Destination / Park Marker
-      if (destinationLocation) {
-        const [destLat, destLng] = destinationLocation;
-        const destMarkerHtml = `
-          <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-sans text-[11px] font-medium shadow-sm whitespace-nowrap mb-0.5">
-              Destination
-            </div>
-            <div class="w-3.5 h-3.5 rounded-full bg-sky-500 border-2 border-white shadow-sm"></div>
-          </div>
-        `;
-
-        const destIcon = L.divIcon({
-          className: 'custom-dest-pin',
-          html: destMarkerHtml,
-          iconSize: [90, 36],
-          iconAnchor: [45, 32],
-        });
-
-        const destMarker = L.marker([destLat, destLng], {
-          icon: destIcon,
-          draggable: true,
-          zIndexOffset: 990,
-        }).addTo(map);
-
-        destMarker.on('dragend', async (e: any) => {
-          const pos = e.target.getLatLng();
-          const coords: [number, number] = [pos.lat, pos.lng];
-          await setDestinationPoint(
-            coords,
-            `Custom Park (${pos.lat.toFixed(3)}, ${pos.lng.toFixed(3)})`,
-            'Direct Parking Gate'
-          );
-        });
-
-        destinationMarkerRef.current = destMarker;
-      }
-
-      // Click anywhere on the map to show contextual action popup
+      // Click anywhere on the map to set Start/Initial Point or find parking slots nearby
       map.on('click', (e: any) => {
         const { lat, lng } = e.latlng;
         const distFromStart = calculateHaversineDistanceKm(startLocation, [lat, lng]);
 
         const popupContent = document.createElement('div');
-        popupContent.className = 'p-2 space-y-2 font-sans text-xs min-w-[200px]';
+        popupContent.className = 'p-2 space-y-2 font-sans text-xs min-w-[210px]';
         popupContent.innerHTML = `
-          <div class="text-[11px] font-semibold text-slate-200 flex justify-between">
-            <span>Location</span>
-            <span class="text-slate-400 font-normal">${distFromStart} km away</span>
+          <div class="text-[11px] font-semibold text-slate-200 flex justify-between items-center pb-1 border-b border-slate-700/60">
+            <span class="flex items-center gap-1">
+              <span>📍</span>
+              <span>Map Location</span>
+            </span>
+            <span class="text-slate-400 font-normal text-[10px]">${distFromStart} km away</span>
           </div>
           <div class="text-[11px] text-slate-400 font-mono">
             ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E
           </div>
-          <div class="flex flex-col gap-1 pt-1">
-            <button id="set-as-start-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs transition-colors">
-              Set as Origin
+          <div class="flex flex-col gap-1.5 pt-1">
+            <button id="set-as-start-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-600/60 text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs">
+              <span>📍</span>
+              <span>Set as Start / Initial Point</span>
             </button>
-            <button id="set-as-dest-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/60 text-xs font-medium transition-colors">
-              Set as Destination
-            </button>
-            <button id="search-nearby-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition-colors">
-              Search Parking Nearby
+            <button id="search-nearby-btn" class="w-full text-left px-2.5 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition-colors flex items-center gap-1.5">
+              <span>🅿️</span>
+              <span>Find Parking Slots Near Here</span>
             </button>
           </div>
         `;
@@ -265,19 +224,11 @@ export default function MapDiscovery() {
 
         setTimeout(() => {
           const setStartBtn = popupContent.querySelector('#set-as-start-btn');
-          const setDestBtn = popupContent.querySelector('#set-as-dest-btn');
           const searchNearbyBtn = popupContent.querySelector('#search-nearby-btn');
 
           if (setStartBtn) {
             setStartBtn.addEventListener('click', async () => {
               await setCustomStartPoint([lat, lng], `Custom Start (${lat.toFixed(3)}, ${lng.toFixed(3)})`);
-              map.closePopup();
-            });
-          }
-
-          if (setDestBtn) {
-            setDestBtn.addEventListener('click', async () => {
-              await setDestinationPoint([lat, lng], `Custom Park (${lat.toFixed(3)}, ${lng.toFixed(3)})`, 'Direct Gate');
               map.closePopup();
             });
           }
@@ -322,26 +273,28 @@ export default function MapDiscovery() {
       const markerHtml = isCustomStartPoint
         ? `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-sans text-[11px] font-medium shadow-sm whitespace-nowrap mb-0.5">
-              Start
+            <div class="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/60 text-amber-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
+              <span>📍</span>
+              <span>Start Point</span>
             </div>
-            <div class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm"></div>
+            <div class="w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-white shadow-sm ring-2 ring-amber-500/30"></div>
           </div>
         `
         : `
           <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-            <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-sans text-[11px] font-medium shadow-sm whitespace-nowrap mb-0.5">
-              Start
+            <div class="px-2 py-0.5 rounded bg-slate-900 border border-emerald-500/60 text-emerald-300 font-sans text-[11px] font-semibold shadow-md whitespace-nowrap mb-0.5 flex items-center gap-1">
+              <span>📍</span>
+              <span>Start Point</span>
             </div>
-            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm"></div>
+            <div class="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm ring-2 ring-emerald-500/30"></div>
           </div>
         `;
 
       const startIcon = L.divIcon({
         className: 'custom-start-pin',
         html: markerHtml,
-        iconSize: [80, 36],
-        iconAnchor: [40, 32],
+        iconSize: [100, 36],
+        iconAnchor: [50, 32],
       });
 
       startMarkerRef.current.setIcon(startIcon);
@@ -351,67 +304,7 @@ export default function MapDiscovery() {
     updateMarker();
   }, [startLocation, isCustomStartPoint]);
 
-  // 4. Update Destination Marker
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-
-    const updateDestMarker = async () => {
-      const L = (await import('leaflet')).default || (await import('leaflet'));
-      const map = mapInstanceRef.current;
-
-      if (!destinationLocation) {
-        if (destinationMarkerRef.current) {
-          map.removeLayer(destinationMarkerRef.current);
-          destinationMarkerRef.current = null;
-        }
-        return;
-      }
-
-      const [destLat, destLng] = destinationLocation;
-      const destMarkerHtml = `
-        <div class="relative flex flex-col items-center group cursor-grab active:cursor-grabbing">
-          <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-200 font-sans text-[11px] font-medium shadow-sm whitespace-nowrap mb-0.5">
-            Destination
-          </div>
-          <div class="w-3.5 h-3.5 rounded-full bg-sky-500 border-2 border-white shadow-sm"></div>
-        </div>
-      `;
-
-      const destIcon = L.divIcon({
-        className: 'custom-dest-pin',
-        html: destMarkerHtml,
-        iconSize: [90, 36],
-        iconAnchor: [45, 32],
-      });
-
-      if (destinationMarkerRef.current) {
-        destinationMarkerRef.current.setIcon(destIcon);
-        destinationMarkerRef.current.setLatLng([destLat, destLng]);
-      } else {
-        const destMarker = L.marker([destLat, destLng], {
-          icon: destIcon,
-          draggable: true,
-          zIndexOffset: 990,
-        }).addTo(map);
-
-        destMarker.on('dragend', async (e: any) => {
-          const pos = e.target.getLatLng();
-          const coords: [number, number] = [pos.lat, pos.lng];
-          await setDestinationPoint(
-            coords,
-            `Custom Park (${pos.lat.toFixed(3)}, ${pos.lng.toFixed(3)})`,
-            'Direct Parking Gate'
-          );
-        });
-
-        destinationMarkerRef.current = destMarker;
-      }
-    };
-
-    updateDestMarker();
-  }, [destinationLocation, setDestinationPoint]);
-
-  // 5. Draw / Update Radar Proximity Radius Circle
+  // 4. Draw / Update Radar Proximity Radius Circle around Start Location
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -419,7 +312,7 @@ export default function MapDiscovery() {
       const L = (await import('leaflet')).default || (await import('leaflet'));
       const map = mapInstanceRef.current;
 
-      const centerCoord = isCustomDestination && destinationLocation ? destinationLocation : startLocation;
+      const centerCoord = startLocation;
 
       if (radiusCircleRef.current) {
         map.removeLayer(radiusCircleRef.current);
@@ -440,9 +333,9 @@ export default function MapDiscovery() {
     };
 
     drawRadius();
-  }, [startLocation, destinationLocation, isCustomDestination, radiusKm]);
+  }, [startLocation, radiusKm]);
 
-  // 6. Render Parking Lot Tactical Pins with Proximity Metrics & Dynamic Pricing
+  // 5. Render Parking Lot Tactical Pins with Proximity Metrics & Dynamic Pricing
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
@@ -464,6 +357,10 @@ export default function MapDiscovery() {
           ? `<span class="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-semibold uppercase tracking-tight">${lot.badge}</span>`
           : '';
 
+        const targetDestinationBadge = isSelected
+          ? `<span class="ml-0.5 px-1.5 py-0.5 rounded bg-emerald-400 text-slate-950 text-[9px] font-bold uppercase tracking-tight flex items-center gap-0.5"><span>🎯</span><span>SLOT</span></span>`
+          : '';
+
         let markerHtml = '';
 
         if (isAvailable) {
@@ -473,7 +370,7 @@ export default function MapDiscovery() {
               <div class="flex flex-col items-center">
                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md ${
                   isSelected
-                    ? 'bg-slate-900 text-white font-semibold border-2 border-emerald-400 shadow-md scale-105'
+                    ? 'bg-slate-900 text-white font-semibold border-2 border-emerald-400 shadow-xl scale-110 ring-2 ring-emerald-500/40'
                     : 'bg-slate-900/95 text-slate-100 border border-slate-700/80 hover:border-emerald-500/60 shadow-sm'
                 } text-xs">
                   <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
@@ -483,6 +380,7 @@ export default function MapDiscovery() {
                     ${lot.availableBays} bays
                   </span>
                   ${badgeHtml}
+                  ${targetDestinationBadge}
                 </div>
                 <div class="w-2 h-2 bg-slate-900 rotate-45 mx-auto -mt-1 border-r border-b ${
                   isSelected ? 'border-emerald-400' : 'border-slate-700/80'
@@ -497,7 +395,7 @@ export default function MapDiscovery() {
               <div class="flex flex-col items-center">
                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md ${
                   isSelected
-                    ? 'bg-slate-900 text-slate-300 font-semibold border-2 border-rose-400 shadow-md scale-105'
+                    ? 'bg-slate-900 text-slate-300 font-semibold border-2 border-rose-400 shadow-xl scale-110 ring-2 ring-rose-500/40'
                     : 'bg-slate-900/90 text-slate-400 border border-slate-800 shadow-sm'
                 } text-xs">
                   <span class="w-1.5 h-1.5 rounded-full bg-rose-400/80 shrink-0"></span>
@@ -505,6 +403,7 @@ export default function MapDiscovery() {
                   <span class="px-1 py-0.2 rounded bg-rose-500/10 text-rose-300/90 text-[10px] font-medium">
                     Full
                   </span>
+                  ${targetDestinationBadge}
                 </div>
                 <div class="w-2 h-2 bg-slate-900 rotate-45 mx-auto -mt-1 border-r border-b ${
                   isSelected ? 'border-rose-400' : 'border-slate-800'

@@ -292,7 +292,7 @@ export default function NavigationOverlay() {
 
         {/* Tactical Drag Hint */}
         <div className="bg-[#0c1017] px-4 py-1.5 border-t border-white/5 text-[10px] font-mono text-slate-400 flex items-center justify-between">
-          <span>💡 Drag 🟢 Start or 🏁 Park markers on map to recalculate route dynamically</span>
+          <span>💡 Drag 📍 Start Pin on map to adjust departure point</span>
           {isCustomStartPoint && (
             <span className="text-amber-400 font-semibold">Custom Origin Active</span>
           )}

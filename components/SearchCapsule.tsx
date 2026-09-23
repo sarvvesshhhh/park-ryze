@@ -60,6 +60,7 @@ export default function SearchCapsule() {
   const setDestinationPoint = useParkingStore((s) => s.setDestinationPoint);
 
   const parkingLots = useParkingStore((s) => s.parkingLots);
+  const selectedLotId = useParkingStore((s) => s.selectedLotId);
   const selectLot = useParkingStore((s) => s.selectLot);
   const getRankedLots = useParkingStore((s) => s.getRankedLots);
 
@@ -106,24 +107,17 @@ export default function SearchCapsule() {
     return () => clearTimeout(timer);
   }, [searchQuery, activeKey, userLocation]);
 
-  // Action 1: Set as Route Origin (Start Point)
+  // Action 1: Set as Route Origin (Start / Initial Point)
   const handleSetAsStartPoint = async (place: GeocodingResult) => {
     const [lng, lat] = place.center;
     await setCustomStartPoint([lat, lng], place.text);
     setShowDropdown(false);
   };
 
-  // Action 2: Set as Park / Destination (Final Point)
-  const handleSetAsDestination = async (place: GeocodingResult) => {
-    const [lng, lat] = place.center;
-    await setDestinationPoint([lat, lng], place.text, 'Security Gate');
-    setShowDropdown(false);
-  };
-
-  // Action 3: Filter Parking bays near this landmark
+  // Action 2: Find Parking slots near this landmark / POI
   const handleFindParkingNearby = (place: GeocodingResult) => {
     const [lng, lat] = place.center;
-    setDestinationPoint([lat, lng], place.text, 'Destination Area');
+    setUserLocation([lat, lng]);
     setSearchQuery('');
     setShowDropdown(false);
   };
@@ -179,34 +173,39 @@ export default function SearchCapsule() {
     <div className="absolute top-18 md:top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-30 pointer-events-none">
       <div className="relative glass-panel rounded-2xl p-2.5 md:p-3.5 flex flex-col gap-2.5 pointer-events-auto shadow-2xl border border-white/10">
         
-        {/* Active Route Pill with Start and Destination */}
-        {(isCustomStartPoint || isCustomDestination) && (
-          <div className="flex flex-wrap items-center justify-between px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-mono gap-2">
-            <div className="flex items-center gap-2 truncate">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-              <span className="truncate">
-                Start: <strong className="text-white">{startLocationName}</strong>
-              </span>
-              <span className="text-slate-400">➔</span>
-              <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0"></span>
-              <span className="truncate">
-                Park: <strong className="text-white">{destinationName}</strong>
-              </span>
+        {/* Active Route Pill with Start and Destination Parking Slot */}
+        {(() => {
+          const selectedLot = parkingLots.find((l) => l.id === selectedLotId);
+          if (!isCustomStartPoint && !selectedLot) return null;
+
+          return (
+            <div className="flex flex-wrap items-center justify-between px-3 py-1.5 rounded-xl bg-slate-900/95 border border-emerald-500/40 text-emerald-300 text-xs font-mono gap-2 shadow-lg">
+              <div className="flex items-center gap-2 truncate">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                <span className="truncate">
+                  Start: <strong className="text-white">{startLocationName}</strong>
+                </span>
+                <span className="text-slate-500">➔</span>
+                <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0"></span>
+                <span className="truncate">
+                  Parking Slot: <strong className="text-white">{selectedLot ? selectedLot.name : 'Select a Slot on Map'}</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {isCustomStartPoint && (
+                  <button
+                    type="button"
+                    onClick={resetToGpsLocation}
+                    className="text-[11px] text-amber-300 hover:text-amber-200 underline"
+                    title="Reset route start to actual GPS location"
+                  >
+                    Reset GPS
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {isCustomStartPoint && (
-                <button
-                  type="button"
-                  onClick={resetToGpsLocation}
-                  className="text-[11px] underline hover:text-white"
-                  title="Reset route start to actual GPS location"
-                >
-                  Reset GPS
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Search Bar Row */}
         <div className="flex flex-col sm:flex-row items-center gap-2">
@@ -413,9 +412,11 @@ export default function SearchCapsule() {
                 key={item.name}
                 type="button"
                 onClick={() => {
-                  setDestinationPoint(item.coords, item.name, 'Main Entry Gate');
+                  setUserLocation(item.coords);
+                  setSearchQuery('');
                 }}
                 className="px-2.5 py-1 rounded-lg bg-[#111824]/80 hover:bg-[#1b2332] border border-[#2B313E] text-slate-300 hover:text-white shrink-0 transition-colors"
+                title={`Find parking slots near ${item.name}`}
               >
                 {item.name}
               </button>
@@ -519,7 +520,7 @@ export default function SearchCapsule() {
                           type="button"
                           onClick={() => handleSetAsStartPoint(place)}
                           className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-amber-300 border border-amber-400/30 flex items-center gap-1 transition-colors"
-                          title="Set as driving route origin"
+                          title="Set as driving route origin / start point"
                         >
                           <MapPin className="w-3 h-3" />
                           <span>Set Start</span>
@@ -527,22 +528,12 @@ export default function SearchCapsule() {
 
                         <button
                           type="button"
-                          onClick={() => handleSetAsDestination(place)}
-                          className="px-2.5 py-1 rounded-md bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 flex items-center gap-1 transition-colors font-bold"
-                          title="Set as final parking destination and calculate route"
-                        >
-                          <Flag className="w-3 h-3" />
-                          <span>Set Park</span>
-                        </button>
-
-                        <button
-                          type="button"
                           onClick={() => handleFindParkingNearby(place)}
-                          className="px-2.5 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 transition-colors"
-                          title="Discover all parking spots within radius of this landmark"
+                          className="px-2.5 py-1 rounded-md bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 transition-colors font-medium"
+                          title="Discover all parking slots near this landmark"
                         >
                           <Navigation className="w-3 h-3" />
-                          <span>Nearby</span>
+                          <span>Find Slots Nearby</span>
                         </button>
                       </div>
                     </div>
